@@ -14,5 +14,9 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, Piano::class.java)
             startActivity(intent)
         }
+        findViewById<Button>(R.id.openSheet).setOnClickListener {
+            val intent = Intent(this, Sheet::class.java)
+            startActivity(intent)
+        }
     }
 }

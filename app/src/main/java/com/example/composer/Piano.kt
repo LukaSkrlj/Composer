@@ -19,6 +19,7 @@ class Piano : AppCompatActivity() {
     private val whiteKeys = setOf<String>("a", "b", "c", "d", "e", "f", "g")
     private val speed: Float = 1.0f
 
+
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -102,7 +103,5 @@ class Piano : AppCompatActivity() {
                 findViewById<LinearLayout>(R.id.linearLayour).addView(whitePianoKey)
             }
         }
-
-
     }
 }
