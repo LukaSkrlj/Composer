@@ -26,6 +26,7 @@ class Piano : AppCompatActivity() {
     private final val TWO_TILE_DIST: Int = 198
     private final val BLACK_TILE_WIDTH: Int = 110
 
+
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -172,7 +173,5 @@ class Piano : AppCompatActivity() {
                 findViewById<LinearLayout>(R.id.linearLayour).addView(whitePianoKey)
             }
         }
-
-
     }
 }
