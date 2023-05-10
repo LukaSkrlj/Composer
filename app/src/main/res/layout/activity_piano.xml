@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/pianoLayout"
     android:layout_width="match_parent"
@@ -7,53 +8,62 @@
     android:orientation="horizontal"
     tools:context=".Piano">
 
-    <HorizontalScrollView
-        android:layout_width="wrap_content"
+
+    <com.sothree.slidinguppanel.SlidingUpPanelLayout xmlns:sothree="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/sliding_layout"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="100dp">
+        android:gravity="bottom"
+        sothree:umanoShadowHeight="0dp"
+        sothree:umanoFadeColor="@android:color/transparent">
+
+        <!--Content other than piano put in this layout (it doesn't need to be relative)-->
+        <RelativeLayout
+            android:id="@+id/viewing"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="Main content put here"
+            android:gravity="top" />
 
         <RelativeLayout
+            android:id="@+id/pianoContainer"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent">
+            android:layout_height="280dp"
+            android:contentDescription="Piano content"
+            android:gravity="bottom">
 
-            <LinearLayout
-                android:id="@+id/linearLayour"
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/dragDownContainer"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@color/black"
-                android:contentDescription="@string/white_tile_container"
-                android:orientation="horizontal">
+                android:layout_height="30dp"
+                android:layout_above="@id/scrollContainer"
+                android:background="@drawable/droppable_view_border_radius">
 
-            </LinearLayout>
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/baseline_drag_handle_24"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="160dp"
-                android:orientation="horizontal">
-
-                <LinearLayout
-                    android:id="@+id/blackTilesContainer"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_marginLeft="55dp"
-                    android:layout_marginRight="55dp"
-                    android:layout_weight="0.5"
-                    android:orientation="horizontal">
-
-                </LinearLayout>
-            </LinearLayout>
-            <!--<Button
-                android:id="@+id/A0"
+            <HorizontalScrollView
+                android:id="@+id/scrollContainer"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:backgroundTint="@android:color/white"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                android:text="A0"
-                android:textColor="@android:color/black"
-                android:visibility="visible"
-                app:iconPadding="0dp" />-->
+                android:layout_height="250dp"
+                android:layout_alignParentBottom="true">
 
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/tilesContainer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:background="@color/black"
+                    android:contentDescription="@string/tiles_container">
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </HorizontalScrollView>
         </RelativeLayout>
-    </HorizontalScrollView>
+    </com.sothree.slidinguppanel.SlidingUpPanelLayout>
 </LinearLayout>

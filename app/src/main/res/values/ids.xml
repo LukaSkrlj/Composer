@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="a0_piano_tile" type="id"/>
+    <item name="a1_piano_tile" type="id"/>
+    <item name="a2_piano_tile" type="id"/>
+    <item name="a3_piano_tile" type="id"/>
+    <item name="a4_piano_tile" type="id"/>
+    <item name="a5_piano_tile" type="id"/>
+    <item name="a6_piano_tile" type="id"/>
+    <item name="a7_piano_tile" type="id"/>
+
+    <item name="b0_piano_tile" type="id"/>
+    <item name="b1_piano_tile" type="id"/>
+    <item name="b2_piano_tile" type="id"/>
+    <item name="b3_piano_tile" type="id"/>
+    <item name="b4_piano_tile" type="id"/>
+    <item name="b5_piano_tile" type="id"/>
+    <item name="b6_piano_tile" type="id"/>
+    <item name="b7_piano_tile" type="id"/>
+
+    <item name="c1_piano_tile" type="id"/>
+    <item name="c2_piano_tile" type="id"/>
+    <item name="c3_piano_tile" type="id"/>
+    <item name="c4_piano_tile" type="id"/>
+    <item name="c5_piano_tile" type="id"/>
+    <item name="c6_piano_tile" type="id"/>
+    <item name="c7_piano_tile" type="id"/>
+    <item name="c8_piano_tile" type="id"/>
+
+    <item name="d1_piano_tile" type="id"/>
+    <item name="d2_piano_tile" type="id"/>
+    <item name="d3_piano_tile" type="id"/>
+    <item name="d4_piano_tile" type="id"/>
+    <item name="d5_piano_tile" type="id"/>
+    <item name="d6_piano_tile" type="id"/>
+    <item name="d7_piano_tile" type="id"/>
+
+    <item name="e1_piano_tile" type="id"/>
+    <item name="e2_piano_tile" type="id"/>
+    <item name="e3_piano_tile" type="id"/>
+    <item name="e4_piano_tile" type="id"/>
+    <item name="e5_piano_tile" type="id"/>
+    <item name="e6_piano_tile" type="id"/>
+    <item name="e7_piano_tile" type="id"/>
+
+    <item name="f1_piano_tile" type="id"/>
+    <item name="f2_piano_tile" type="id"/>
+    <item name="f3_piano_tile" type="id"/>
+    <item name="f4_piano_tile" type="id"/>
+    <item name="f5_piano_tile" type="id"/>
+    <item name="f6_piano_tile" type="id"/>
+    <item name="f7_piano_tile" type="id"/>
+
+    <item name="g1_piano_tile" type="id"/>
+    <item name="g2_piano_tile" type="id"/>
+    <item name="g3_piano_tile" type="id"/>
+    <item name="g4_piano_tile" type="id"/>
+    <item name="g5_piano_tile" type="id"/>
+    <item name="g6_piano_tile" type="id"/>
+    <item name="g7_piano_tile" type="id"/>
+
+</resources>
