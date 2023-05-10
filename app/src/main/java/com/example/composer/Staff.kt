@@ -35,13 +35,6 @@ class Staff @JvmOverloads constructor(
         paint.isAntiAlias = true
         paint.isFilterBitmap = true
         canvas?.drawLines(lines.flatten().toFloatArray(), paint)
-        val d = resources.getDrawable(
-            R.drawable.quarter_note,
-            null
-        )
-
-        d.setBounds(0, 0, 82, 82)
-        d.draw(canvas!!)
         drawNotes()
     }
 
