@@ -31,6 +31,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <com.example.composer.Staff
+        android:id="@+id/staff"
         android:layout_width="239dp"
         android:layout_height="133dp"
         android:layout_margin="10dp"
