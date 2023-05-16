@@ -18,8 +18,10 @@ import androidx.core.view.WindowCompat
 import kotlin.math.roundToInt
 
 
+
+
 class Piano : AppCompatActivity() {
-    private val soundPool: SoundPool = SoundPool.Builder().build()
+    private val soundPool: SoundPool = SoundPool.Builder().setMaxStreams(100).build()
     private val whiteKeys = setOf<String>("a", "b", "c", "d", "e", "f", "g")
     private val blackKeys = setOf<String>("db", "eb", "gb", "ab", "bb")
     private val octaveColor = arrayOf<String>(
@@ -41,6 +43,7 @@ class Piano : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_piano)
 
+
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
         this.hideSystemBars()
@@ -48,6 +51,7 @@ class Piano : AppCompatActivity() {
         this.demoTest()
 
         this.addWhitePianoKeys()
+
 
 
     }
