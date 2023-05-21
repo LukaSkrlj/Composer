@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "775057639726",
+    "project_id": "composer-7a82f",
+    "storage_bucket": "composer-7a82f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:775057639726:android:004deed034df4cb91c52bf",
+        "android_client_info": {
+          "package_name": "com.example.composer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "775057639726-jr3tglcsuq2o24aj39gk24ubpk0lqlni.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDcj2g5JODHpwrINS-fhp6K7ZnTsd7cVD4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "775057639726-jr3tglcsuq2o24aj39gk24ubpk0lqlni.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
