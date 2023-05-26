@@ -1,4 +1,4 @@
-package com.example.composer
+package com.example.composer.activities
 
 
 import android.content.pm.ActivityInfo
@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.media.SoundPool
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -15,6 +16,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.ViewModelProvider
+import com.example.composer.R
+import com.example.composer.models.Note
+import com.example.composer.viewmodel.NoteViewModel
 import kotlin.math.roundToInt
 
 
@@ -34,7 +39,10 @@ class Piano : AppCompatActivity() {
         "#999999"
     )
     private val speed: Float = 1.0f
-
+    private lateinit var noteViewModel: NoteViewModel
+    private lateinit var staff: Staff
+    private val lineSpacing = Staff.getSpacing()
+    private val initialNotePosition = (lineSpacing / 2 * 26).toInt()
 
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,13 +51,17 @@ class Piano : AppCompatActivity() {
 
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
+        staff = findViewById(R.id.staff)
+        noteViewModel = ViewModelProvider(this)[NoteViewModel::class.java]
+        noteViewModel.notes.observe(this) { notes ->
+            staff.drawNotes(notes)
+        }
+        //So data does not get duplicated
+        //DELETE THIS LINE IN PRODUCTION!!!
+        noteViewModel.deleteNotes()
+
         this.hideSystemBars()
-
-        this.demoTest()
-
         this.addWhitePianoKeys()
-
-
     }
 
 
@@ -82,14 +94,6 @@ class Piano : AppCompatActivity() {
                     or View.SYSTEM_UI_FLAG_FULLSCREEN
                     or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
         }
-    }
-
-    private fun demoTest() {
-        var c3Id = soundPool.load(this, R.raw.c3, 1)/*
-        findViewById<Button>(R.id.A0)
-            .setOnClickListener {
-                this.soundPool.play(c3Id, 1f, 1f, 1, 0, speed)
-            }*/
     }
 
 
@@ -258,6 +262,7 @@ class Piano : AppCompatActivity() {
 
                 blackPianoKey.setOnClickListener {
                     this.soundPool.play(loadedFile, 1f, 1f, 1, 0, speed)
+                    noteViewModel.addNote(Note(right = 82, bottom = 82, dx = 0f, dy = 0f))
                 }
 
                 constraintLayout.addView(blackPianoKey)
@@ -265,7 +270,6 @@ class Piano : AppCompatActivity() {
                 if (newKey == "bb0") {
                     break@inner
                 }
-
             }
         }
         constraintSet.applyTo(constraintLayout)
@@ -278,7 +282,7 @@ class Piano : AppCompatActivity() {
         val chainIds = IntArray(52)
         val constraintLayout: ConstraintLayout =
             findViewById(R.id.tilesContainer)
-        var arrayCounter = 0;
+        var lineCounter = 0
         val constraintSet = ConstraintSet()
         constraintSet.clone(constraintLayout)
         outer@ while (octave < 9) {
@@ -311,7 +315,7 @@ class Piano : AppCompatActivity() {
                     ConstraintSet.PARENT_ID,
                     ConstraintSet.BOTTOM
                 )
-                chainIds[arrayCounter] = whitePianoKey.id
+                chainIds[lineCounter] = whitePianoKey.id
 
 
 
@@ -319,24 +323,25 @@ class Piano : AppCompatActivity() {
                 whitePianoKey.gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
                 whitePianoKey.setTextColor(Color.parseColor(octaveColor[octave]))
                 whitePianoKey.setBackgroundResource(R.drawable.white_piano_border)
-                //created by Kristijan Fajdetic, 4.4.2023 @copyright
                 whitePianoKey.stateListAnimator = null
-
-
+                var dy = initialNotePosition - (lineSpacing / 2) * lineCounter
                 whitePianoKey.setOnClickListener {
                     this.soundPool.play(loadedFile, 1f, 1f, 1, 0, speed)
-
+                    val bottom = 82 + initialNotePosition
+                    val note = Note(
+                        right = 82,
+                        bottom = 82,
+                        dx = 0f,
+                        dy = dy
+                    )
+                    Log.d("aaa", note.toString())
+                    noteViewModel.addNote(note)
                 }
 
-
-
                 constraintLayout.addView(whitePianoKey)
-                arrayCounter++
-
+                lineCounter++
             }
-
         }
-
 
         constraintSet.createHorizontalChain(
             ConstraintSet.PARENT_ID,
@@ -357,6 +362,9 @@ class Piano : AppCompatActivity() {
                 whitePianoTile.measuredHeight
             )
         }
+    }
+
+    fun calculateNoteHeight() {
 
     }
 }

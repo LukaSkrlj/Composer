@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
-    tools:context=".Sheet">
+    tools:context=".activities.Sheet">
 
 
     <ImageView
@@ -30,7 +30,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <com.example.composer.Staff
+    <com.example.composer.activities.Staff
         android:id="@+id/staff"
         android:layout_width="239dp"
         android:layout_height="133dp"

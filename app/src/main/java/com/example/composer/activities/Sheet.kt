@@ -1,4 +1,4 @@
-package com.example.composer
+package com.example.composer.activities
 
 import android.app.Dialog
 import android.graphics.Color
@@ -11,6 +11,7 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.example.composer.R
 
 
 class Sheet : AppCompatActivity() {

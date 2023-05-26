@@ -5,17 +5,18 @@
     android:id="@+id/pianoLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/white"
     android:orientation="horizontal"
-    tools:context=".Piano">
-
+    tools:context=".activities.Piano">
 
     <com.sothree.slidinguppanel.SlidingUpPanelLayout xmlns:sothree="http://schemas.android.com/apk/res-auto"
         android:id="@+id/sliding_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="bottom"
+        sothree:umanoFadeColor="@android:color/transparent"
         sothree:umanoShadowHeight="0dp"
-        sothree:umanoFadeColor="@android:color/transparent">
+        tools:ignore="MissingClass">
 
         <!--Content other than piano put in this layout (it doesn't need to be relative)-->
         <RelativeLayout
@@ -23,7 +24,17 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:contentDescription="Main content put here"
-            android:gravity="top" />
+            android:gravity="top">
+
+            <com.example.composer.activities.Staff
+                android:id="@+id/staff"
+                android:layout_width="239dp"
+                android:layout_height="133dp"
+                android:layout_margin="10dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+        </RelativeLayout>
 
         <RelativeLayout
             android:id="@+id/pianoContainer"

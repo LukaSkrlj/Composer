@@ -12,16 +12,16 @@
         android:theme="@style/Theme.Composer"
         tools:targetApi="31">
         <activity
-            android:name=".Sheet"
+            android:name=".activities.Sheet"
             android:exported="false" />
         <activity
-            android:name=".Piano"
+            android:name=".activities.Piano"
             android:exported="false"
             android:theme="@style/Theme.Composer.NoActionBarAndStatusBar" />
-        <activity android:name=".MainActivity" />
+        <activity android:name=".activities.MainActivity" />
 
         <activity
-            android:name=".SplashActivity"
+            android:name=".activities.SplashActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
