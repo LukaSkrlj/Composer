@@ -23,8 +23,10 @@ import com.example.composer.viewmodel.NoteViewModel
 import kotlin.math.roundToInt
 
 
+
+
 class Piano : AppCompatActivity() {
-    private val soundPool: SoundPool = SoundPool.Builder().build()
+    private val soundPool: SoundPool = SoundPool.Builder().setMaxStreams(100).build()
     private val whiteKeys = setOf<String>("a", "b", "c", "d", "e", "f", "g")
     private val blackKeys = setOf<String>("db", "eb", "gb", "ab", "bb")
     private val octaveColor = arrayOf<String>(
@@ -49,6 +51,7 @@ class Piano : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_piano)
 
+
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
         staff = findViewById(R.id.staff)
@@ -61,6 +64,9 @@ class Piano : AppCompatActivity() {
         noteViewModel.deleteNotes()
 
         this.hideSystemBars()
+
+        this.demoTest()
+
         this.addWhitePianoKeys()
     }
 
@@ -94,6 +100,14 @@ class Piano : AppCompatActivity() {
                     or View.SYSTEM_UI_FLAG_FULLSCREEN
                     or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
         }
+    }
+
+    private fun demoTest() {
+        var c3Id = soundPool.load(this, R.raw.c3, 1)/*
+        findViewById<Button>(R.id.A0)
+            .setOnClickListener {
+                this.soundPool.play(c3Id, 1f, 1f, 1, 0, speed)
+            }*/
     }
 
 
@@ -270,6 +284,7 @@ class Piano : AppCompatActivity() {
                 if (newKey == "bb0") {
                     break@inner
                 }
+
             }
         }
         constraintSet.applyTo(constraintLayout)
@@ -341,7 +356,9 @@ class Piano : AppCompatActivity() {
                 constraintLayout.addView(whitePianoKey)
                 lineCounter++
             }
+
         }
+
 
         constraintSet.createHorizontalChain(
             ConstraintSet.PARENT_ID,
@@ -362,9 +379,6 @@ class Piano : AppCompatActivity() {
                 whitePianoTile.measuredHeight
             )
         }
-    }
-
-    fun calculateNoteHeight() {
 
     }
 }

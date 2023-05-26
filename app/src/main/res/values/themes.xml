@@ -11,8 +11,10 @@
         <item name="colorOnSecondary">@color/black</item>
         <!-- Customize your theme here. -->
         <item name="android:navigationBarColor">
-            @android:color/transparent
+            @android:color/white
         </item>
+        <item name="android:fontFamily">@font/jost</item>
+
 
         <!-- Optional: set to transparent if your app is drawing behind the status bar. -->
         <item name="android:statusBarColor">
