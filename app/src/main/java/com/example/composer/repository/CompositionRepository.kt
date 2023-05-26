@@ -3,6 +3,7 @@ package com.example.composer.repository
 import androidx.lifecycle.LiveData
 import com.example.composer.data.CompositionDao
 import com.example.composer.models.Composition
+import com.example.composer.models.CompositionWithMeasures
 
 class CompositionRepository(private val compositionDao: CompositionDao) {
     val compositions: LiveData<List<Composition>> = compositionDao.getCompositions()
@@ -15,7 +16,7 @@ class CompositionRepository(private val compositionDao: CompositionDao) {
         compositionDao.deleteComposition(composition)
     }
 
-//    fun getCompositionWIthMeasures(id: Int): List<CompositionWithMeasures> {
-//        return compositionDao.getCompositionWIthMeasures(id)
-//    }
+    fun getCompositionWIthMeasures(id: Int): List<CompositionWithMeasures> {
+        return compositionDao.getCompositionWIthMeasures(id)
+    }
 }

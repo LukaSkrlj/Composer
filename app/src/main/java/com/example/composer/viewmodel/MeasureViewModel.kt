@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
-import com.example.composer.data.MeasureDatabase
+import com.example.composer.data.ComposerDatabase
 import com.example.composer.models.Measure
 import com.example.composer.repository.MeasureRepository
 import kotlinx.coroutines.Dispatchers
@@ -15,12 +15,12 @@ class MeasureViewModel(application: Application) : AndroidViewModel(application)
     private val repository: MeasureRepository
 
     init {
-        val measureDao = MeasureDatabase.getDatabase(application).measureDao()
+        val measureDao = ComposerDatabase.getDatabase(application).measureDao()
         repository = MeasureRepository(measureDao)
         measures = repository.measures
     }
 
-    fun addNote(measure: Measure) {
+    fun upsertMeasure(measure: Measure) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.upsertMeasure(measure)
         }

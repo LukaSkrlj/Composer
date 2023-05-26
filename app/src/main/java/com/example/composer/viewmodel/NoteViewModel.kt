@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
-import com.example.composer.data.NoteDatabase
+import com.example.composer.data.ComposerDatabase
 import com.example.composer.models.Note
 import com.example.composer.repository.NoteRepository
 import kotlinx.coroutines.Dispatchers
@@ -15,7 +15,7 @@ class NoteViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: NoteRepository
 
     init {
-        val noteDao = NoteDatabase.getDatabase(application).noteDao()
+        val noteDao = ComposerDatabase.getDatabase(application).noteDao()
         repository = NoteRepository(noteDao)
         notes = repository.notes
     }
