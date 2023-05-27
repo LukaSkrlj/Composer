@@ -23,8 +23,6 @@ import com.example.composer.viewmodel.NoteViewModel
 import kotlin.math.roundToInt
 
 
-
-
 class Piano : AppCompatActivity() {
     private val soundPool: SoundPool = SoundPool.Builder().setMaxStreams(100).build()
     private val whiteKeys = setOf<String>("a", "b", "c", "d", "e", "f", "g")
@@ -342,7 +340,6 @@ class Piano : AppCompatActivity() {
                 var dy = initialNotePosition - (lineSpacing / 2) * lineCounter
                 whitePianoKey.setOnClickListener {
                     this.soundPool.play(loadedFile, 1f, 1f, 1, 0, speed)
-                    val bottom = 82 + initialNotePosition
                     val note = Note(
                         right = 82,
                         bottom = 82,
