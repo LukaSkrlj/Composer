@@ -1,15 +1,14 @@
-package com.example.composer
+package com.example.composer.activities
 
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import android.widget.Button
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import com.example.composer.R
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -55,11 +54,12 @@ class LoginActivity : AppCompatActivity() {
                     Toast.makeText(applicationContext, "Something went wrong", Toast.LENGTH_SHORT)
                         .show()
                 }
-            }else {
+            } else {
                 Toast.makeText(applicationContext, "Something went wrong", Toast.LENGTH_SHORT)
                     .show()
             }
         }
+
     private fun navigateToMain() {
         Log.d("we are in login", "we are here")
         val mainIntent = Intent(this, MainActivity::class.java)

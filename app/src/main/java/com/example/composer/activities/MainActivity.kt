@@ -5,15 +5,17 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
-import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.example.composer.R
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.composer.R
+import com.example.composer.adapters.SymphoniesAdapter
+import com.example.composer.dialogs.SearchDialog
+import com.example.composer.models.MusicModel
 
 class MainActivity : AppCompatActivity() {
 
@@ -34,10 +36,11 @@ class MainActivity : AppCompatActivity() {
         val allSymphoniesAdapter = SymphoniesAdapter(this, musicList, R.layout.music_row)
         val newSymphoniesAdapter = SymphoniesAdapter(this, musicList, R.layout.music_column)
         recyclerViewVertical.adapter = allSymphoniesAdapter
-        recyclerViewVertical.layoutManager  = LinearLayoutManager(this)
+        recyclerViewVertical.layoutManager = LinearLayoutManager(this)
 
         recyclerViewHorizontal.adapter = newSymphoniesAdapter
-        recyclerViewHorizontal.layoutManager = LinearLayoutManager(this,LinearLayoutManager.HORIZONTAL, false)
+        recyclerViewHorizontal.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
 
 //
 //        findViewById<Button>(R.id.openSheet).setOnClickListener {
