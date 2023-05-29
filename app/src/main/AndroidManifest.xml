@@ -19,7 +19,7 @@
             android:exported="false"
             android:theme="@style/Theme.Composer.NoActionBarAndStatusBar" />
         <activity android:name=".activities.MainActivity" />
-        <activity android:name=".activities.SearchDialog" />
+        <activity android:name=".activities.SearchActivity" />
         <activity android:name=".activities.LoginActivity" />
         <activity
             android:name=".activities.SplashActivity"

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/allSymphoniesFragment"
+        android:icon="@drawable/ic_people"
+        android:title="All symphonies" />
+    <item
+        android:id="@+id/mySymphoniesFragment"
+        android:icon="@drawable/music_list_icon"
+        android:title="My symphonies" />
+</menu>
