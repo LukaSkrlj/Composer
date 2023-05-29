@@ -2,5 +2,7 @@
     <string name="app_name">Composer</string>
     <string name="tiles_container">Tiles container</string>>
     <string name="main_title"><b>Composer</b></string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
     >
 </resources>

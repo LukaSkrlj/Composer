@@ -1,7 +1,8 @@
 package com.example.composer.models
 
 data class MusicModel(
-    val symphonyName: String,
-    val symphonyComposer: String,
-    val symphonyDurationSeconds: Int
+    val symphonyName: String? = "",
+    val symphonyComposer: String? = "",
+    val symphonyDurationSeconds: Int? = 0
 )
+
