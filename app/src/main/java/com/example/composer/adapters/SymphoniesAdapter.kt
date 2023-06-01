@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.fragment.app.FragmentActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.example.composer.R
 import com.example.composer.models.MusicModel
@@ -14,8 +15,7 @@ class SymphoniesAdapter(
     var context: Context,
     var symphoniesList: ArrayList<MusicModel>,
     val layoutID: Int
-) :
-    RecyclerView.Adapter<SymphoniesAdapter.ViewHolder>() {
+) : RecyclerView.Adapter<SymphoniesAdapter.ViewHolder>() {
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -28,9 +28,11 @@ class SymphoniesAdapter(
         holder.symphonyName?.text = symphoniesList[position].symphonyName
         holder.composerName?.text = symphoniesList[position].symphonyComposer
         holder.symphonyImage.setImageResource(R.drawable.music_placeholder)
-        val minutes = (symphoniesList[position].symphonyDurationSeconds % 3600) / 60
-        val seconds = symphoniesList[position].symphonyDurationSeconds % 60
-        val timeString = String.format("%02d:%02d", minutes, seconds)
+
+        val minutes = (symphoniesList[position].symphonyDurationSeconds?.rem(3600))?.div(60);
+        val seconds = symphoniesList[position].symphonyDurationSeconds?.rem(60);
+        val timeString = String.format("%02d:%02d", minutes, seconds);
+
         holder.duration?.text = timeString
     }
 

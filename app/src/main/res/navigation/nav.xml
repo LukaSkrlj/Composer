@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav"
+    app:startDestination="@id/allSymphoniesFragment">
+
+    <fragment
+        android:id="@+id/allSymphoniesFragment"
+        android:name="com.example.composer.AllSymphoniesFragment"
+        android:label="fragment_all_symphonies"
+        tools:layout="@layout/fragment_all_symphonies" />
+    <fragment
+        android:id="@+id/mySymphoniesFragment"
+        tools:layout="@layout/fragment_my_symphonies"
+        android:name="com.example.composer.MySymphoniesFragment"
+        android:label="fragment_my_symphonies" />
+</navigation>
