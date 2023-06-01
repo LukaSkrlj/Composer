@@ -32,6 +32,11 @@ class LoginActivity : AppCompatActivity() {
             signIn()
         }
 
+        findViewById<Button>(R.id.openPiano).setOnClickListener {
+            val intent = Intent(this, Piano::class.java)
+            startActivity(intent)
+        }
+
 
     }
 
@@ -48,7 +53,7 @@ class LoginActivity : AppCompatActivity() {
                 val data: Intent? = result.data
                 val task = GoogleSignIn.getSignedInAccountFromIntent(data)
                 try {
-                    task.getResult()
+                    task.result
                     navigateToMain()
                 } catch (e: ApiException) {
                     Toast.makeText(applicationContext, "Something went wrong", Toast.LENGTH_SHORT)

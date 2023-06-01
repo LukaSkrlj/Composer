@@ -14,6 +14,17 @@ import com.example.composer.models.Note
 class Staff @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
+    companion object {
+        // Note is starting on first line, note F4, use spacing to move notes vertically
+        private const val lineSpacing = 20f
+
+        fun getSpacing(): Float {
+            return lineSpacing
+        }
+    }
+
+    private val barLinePaint = Paint()
+
     private val notesDrawable: Array<String> = arrayOf(
         "accidental_doubleflat",
         "accidental_doublesharp",
@@ -79,34 +90,35 @@ class Staff @JvmOverloads constructor(
     private val staffWidth = 500f
     private val firstLine: Array<Float> =
         arrayOf(0f, lineThickness / 2, staffWidth, lineThickness / 2)
+
+    private var barLine =
+        arrayOf(
+            lineThickness / 2,
+            lineThickness / 2,
+            lineThickness / 2,
+            lineThickness / 2 + (linesCount - 1) * lineSpacing
+        )
+
     private var lines: Array<Array<Float>> = arrayOf()
 
-    var notes: List<Note> = listOf()
-
-    companion object {
-        // Note is starting on first line, note F3, use spacing to move notes vertically
-        private val spacing = 20f
-        fun getSpacing(): Float {
-            return spacing
-        }
-    }
+    private var notes: List<Note> = listOf()
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
         var lastLine: Array<Float> = firstLine
+
         for (i in 1..linesCount) {
             lines += lastLine
             lastLine =
-                lastLine.mapIndexed { index, value -> if (index % 2 == 1) value + spacing else value }
+                lastLine.mapIndexed { index, value -> if (index % 2 == 1) value + lineSpacing else value }
                     .toTypedArray()
         }
 
-        val paint = Paint()
-        paint.strokeWidth = lineThickness
-        paint.isAntiAlias = true
-        paint.isFilterBitmap = true
-        canvas.drawLines(lines.flatten().toFloatArray(), paint)
+        barLinePaint.strokeWidth = lineThickness
+        barLinePaint.isAntiAlias = true
+        barLinePaint.isFilterBitmap = true
+        canvas.drawLines(lines.flatten().toFloatArray(), barLinePaint)
 
         for (note in notes) {
             val d = resources.getDrawable(
@@ -118,6 +130,7 @@ class Staff @JvmOverloads constructor(
             d.draw(canvas)
             canvas.translate(-note.dx, -note.dy)
         }
+        this.drawEnd(canvas)
     }
 
 
@@ -276,7 +289,7 @@ class Staff @JvmOverloads constructor(
     private fun drawKeySignatures(numberOfSignatures: Int) {
         val notesHeight = lines.last().last().toInt()
         val signatureArray: ArrayList<Drawable?> = ArrayList<Drawable?>(numberOfSignatures)
-        val signatureHeight = (spacing * 2).toInt()
+        val signatureHeight = (lineSpacing * 2).toInt()
         val signatureWidth = (notesHeight / 4)
 
         for (i in 0..numberOfSignatures - 1) {
@@ -290,47 +303,69 @@ class Staff @JvmOverloads constructor(
             when (i + 1) {
                 1 -> signatureArray[i]?.setBounds(
                     10,
-                    (spacing / 2).toInt(),
+                    (lineSpacing / 2).toInt(),
                     10 + signatureWidth,
-                    (spacing / 2).toInt() + signatureHeight
+                    (lineSpacing / 2).toInt() + signatureHeight
                 )
                 2 -> signatureArray[i]?.setBounds(
                     30,
-                    -(spacing + 0.2 * lineThickness).toInt(),
+                    -(lineSpacing + 0.2 * lineThickness).toInt(),
                     30 + signatureWidth,
-                    -(spacing + 0.2 * lineThickness).toInt() + signatureHeight
+                    -(lineSpacing + 0.2 * lineThickness).toInt() + signatureHeight
                 )
                 3 -> signatureArray[i]?.setBounds(
                     55,
-                    (spacing / 1).toInt(),
+                    (lineSpacing / 1).toInt(),
                     55 + signatureWidth,
-                    (spacing / 1).toInt() + signatureHeight
+                    (lineSpacing / 1).toInt() + signatureHeight
                 )
                 4 -> signatureArray[i]?.setBounds(
                     75,
-                    -(spacing / 5 + 3 * lineThickness).toInt(),
+                    -(lineSpacing / 5 + 3 * lineThickness).toInt(),
                     75 + signatureWidth,
-                    -(spacing / 5 + 3 * lineThickness).toInt() + signatureHeight
+                    -(lineSpacing / 5 + 3 * lineThickness).toInt() + signatureHeight
                 )
                 5 -> signatureArray[i]?.setBounds(
                     100,
-                    (1.6 * spacing).toInt(),
+                    (1.6 * lineSpacing).toInt(),
                     100 + signatureWidth,
-                    (1.6 * spacing).toInt() + signatureHeight
+                    (1.6 * lineSpacing).toInt() + signatureHeight
                 )
                 6 -> signatureArray[i]?.setBounds(
                     125,
-                    -(spacing / 25).toInt(),
+                    -(lineSpacing / 25).toInt(),
                     125 + signatureWidth,
-                    -(spacing / 25).toInt() + signatureHeight
+                    -(lineSpacing / 25).toInt() + signatureHeight
                 )
                 7 -> signatureArray[i]?.setBounds(
                     150,
-                    (2 * spacing).toInt(),
+                    (2 * lineSpacing).toInt(),
                     150 + signatureWidth,
-                    (2 * spacing).toInt() + signatureHeight
+                    (2 * lineSpacing).toInt() + signatureHeight
                 )
             }
         }
+    }
+
+    fun drawEnd(canvas: Canvas, width: Float = 500f) {
+        canvas.drawLine(
+            width + barLine[0] - lineSpacing,
+            barLine[1],
+            width + barLine[2] - lineSpacing,
+            barLine[3],
+            barLinePaint
+        )
+        val thickLinePaint = Paint()
+        val thickLineStrokeWidth = lineSpacing / 2
+        thickLinePaint.strokeWidth = thickLineStrokeWidth
+        thickLinePaint.isAntiAlias = true
+        thickLinePaint.isFilterBitmap = true
+        canvas.drawLine(
+            width - thickLineStrokeWidth / 2,
+            barLine[1],
+            width - thickLineStrokeWidth / 2,
+            barLine[3],
+            thickLinePaint
+        )
     }
 }
