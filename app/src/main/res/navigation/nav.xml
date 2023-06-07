@@ -7,12 +7,40 @@
 
     <fragment
         android:id="@+id/allSymphoniesFragment"
-        android:name="com.example.composer.AllSymphoniesFragment"
+        android:name="com.example.composer.fragments.AllSymphoniesFragment"
         android:label="fragment_all_symphonies"
-        tools:layout="@layout/fragment_all_symphonies" />
+        tools:layout="@layout/fragment_all_symphonies">
+        <action
+            android:id="@+id/action_allSymphoniesFragment_to_mySymphoniesFragment"
+            app:destination="@id/mySymphoniesFragment" />
+        <action
+            android:id="@+id/action_allSymphoniesFragment_to_profileInfoFragment"
+            app:destination="@id/profileInfoFragment" />
+    </fragment>
     <fragment
         android:id="@+id/mySymphoniesFragment"
-        tools:layout="@layout/fragment_my_symphonies"
-        android:name="com.example.composer.MySymphoniesFragment"
-        android:label="fragment_my_symphonies" />
+        android:name="com.example.composer.fragments.MySymphoniesFragment"
+        android:label="fragment_my_symphonies"
+        tools:layout="@layout/fragment_my_symphonies"/>
+    <fragment
+        android:id="@+id/profileInfoFragment"
+        android:name="com.example.composer.fragments.ProfileFragment"
+        android:label="fragment_profile"
+        tools:layout="@layout/fragment_profile">
+        <action
+            android:id="@+id/action_profileInfoFragment_to_favoritesFragment"
+            app:destination="@id/favoritesFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/favoritesFragment"
+        android:name="com.example.composer.fragments.FavoritesFragment"
+        android:label="fragment_favorites"
+        tools:layout="@layout/fragment_favorites" >
+        <action
+            android:id="@+id/action_favoritesFragment_to_profileInfoFragment2"
+            app:destination="@id/profileInfoFragment" />
+    </fragment>
+
+
 </navigation>

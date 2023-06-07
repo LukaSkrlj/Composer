@@ -4,5 +4,11 @@
     <string name="main_title"><b>Composer</b></string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="symphony_name">Symphony name</string>
+    <string name="back">back</string>
+    <string name="heart">heart</string>
+    <string name="opensearch">OpenSearch</string>
+    <string name="addsymphony">addSymphony</string>
+    <string name="play">play</string>
     >
 </resources>
