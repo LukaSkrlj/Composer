@@ -7,9 +7,11 @@ import android.graphics.drawable.Drawable
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import androidx.core.content.res.ResourcesCompat
 import com.example.composer.R
+import com.example.composer.models.MeasureWithNotes
 import com.example.composer.models.Note
 
 
@@ -91,9 +93,7 @@ class Staff @JvmOverloads constructor(
     val notesHmap = LinkedHashMap<String, Note>()
     private val linesCount = 5
     private val lineThickness = 2f
-    private val staffWidth = 500f
-    private val firstLine: Array<Float> =
-        arrayOf(0f, lineThickness / 2, staffWidth, lineThickness / 2)
+    private val lastNoteMeasureSpacing = 150f
 
     private var barLine =
         arrayOf(
@@ -105,45 +105,83 @@ class Staff @JvmOverloads constructor(
 
     private var lines: Array<Array<Float>> = arrayOf()
 
-    private var notes: List<Note> = listOf()
+
     private var isMusicPlaying: Boolean = false
+    private var measuresWithNotes: List<MeasureWithNotes> = listOf()
+    private var notes: List<Note> = emptyList()
+
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+        var previousMeasureEnd = 0f
+        for (measure in measuresWithNotes) {
 
-        var lastLine: Array<Float> = firstLine
+            //Measure start position
+            val currentMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
 
-        for (i in 1..linesCount) {
-            lines += lastLine
-            lastLine =
-                lastLine.mapIndexed { index, value -> if (index % 2 == 1) value + lineSpacing else value }
-                    .toTypedArray()
-        }
-
-        barLinePaint.strokeWidth = lineThickness
-        barLinePaint.isAntiAlias = true
-        barLinePaint.isFilterBitmap = true
-        canvas.drawLines(lines.flatten().toFloatArray(), barLinePaint)
-
-        for (note in notes) {
-            val d = resources.getDrawable(
-                R.drawable.quarter_note,
-                null
+            //Bar line
+            canvas.drawLine(
+                barLine[0] + currentMeasureEnd,
+                barLine[1],
+                barLine[2] + currentMeasureEnd,
+                barLine[3],
+                barLinePaint
             )
-            d.setBounds(note.left, note.top, note.right, note.bottom)
-            canvas.translate(note.dx, note.dy)
-            d.draw(canvas)
-            canvas.translate(-note.dx, -note.dy)
+
+            //draw staff
+            var lastLine: Array<Float> =
+                arrayOf(
+                    previousMeasureEnd,
+                    lineThickness / 2,
+                    currentMeasureEnd,
+                    lineThickness / 2
+                )
+
+            for (i in 1..linesCount) {
+                lines += lastLine
+                lastLine =
+                    lastLine.mapIndexed { index, value -> if (index % 2 == 1) value + lineSpacing else value }
+                        .toTypedArray()
+            }
+
+            barLinePaint.strokeWidth = lineThickness
+            barLinePaint.isAntiAlias = true
+            barLinePaint.isFilterBitmap = true
+            canvas.drawLines(lines.flatten().toFloatArray(), barLinePaint)
+
+            Log.d("notes", measure.notes.toString())
+
+            drawTimeSignature(
+                canvas,
+                measure.measure.timeSignatureTop,
+                measure.measure.timeSignatureBottom
+            )
+            val startingOffset = 50f
+            for (note in measure.notes) {
+                val d = resources.getDrawable(
+                    R.drawable.quarter_note,
+                    null
+                )
+                d.setBounds(note.left, note.top, note.right, note.bottom)
+                canvas.translate(note.dx + startingOffset, note.dy)
+                d.draw(canvas)
+                canvas.translate(-note.dx - startingOffset, -note.dy)
+            }
+
+            previousMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
         }
-        this.drawEnd(canvas)
+
         if (isMusicPlaying) {
             this.drawPlayingLine(canvas, xPositionPlayingLine)
         }
+
+        this.drawEnd(canvas, previousMeasureEnd)
+
     }
 
 
-    fun drawNotes(notesList: List<Note>) {
-        notes = notesList
+    fun drawNotes(measuresList: List<MeasureWithNotes>) {
+        measuresWithNotes = measuresList
         invalidate()
     }
 
@@ -367,11 +405,11 @@ class Staff @JvmOverloads constructor(
         }
     }
 
-    fun drawEnd(canvas: Canvas, width: Float = 500f) {
+    fun drawEnd(canvas: Canvas, dx: Float) {
         canvas.drawLine(
-            width + barLine[0] - lineSpacing,
+            dx + barLine[0] - lineSpacing,
             barLine[1],
-            width + barLine[2] - lineSpacing,
+            dx + barLine[2] - lineSpacing,
             barLine[3],
             barLinePaint
         )
@@ -381,17 +419,17 @@ class Staff @JvmOverloads constructor(
         thickLinePaint.isAntiAlias = true
         thickLinePaint.isFilterBitmap = true
         canvas.drawLine(
-            width - thickLineStrokeWidth / 2,
+            dx - thickLineStrokeWidth / 2,
             barLine[1],
-            width - thickLineStrokeWidth / 2,
+            dx - thickLineStrokeWidth / 2,
             barLine[3],
             thickLinePaint
         )
     }
 
+
     private fun drawPlayingLine(canvas: Canvas, x: Float) {
         playingLinePaint.strokeWidth = 10F
-
 
 
         val handler = Handler(Looper.getMainLooper());
@@ -419,4 +457,35 @@ class Staff @JvmOverloads constructor(
 
 
     }
+
+    fun drawTimeSignature(canvas: Canvas, upperNumber: Int, lowerNumber: Int, dx: Float = 0f) {
+        val upperBound = lines.last().last().toInt() / 2
+        var resourceId = resources.getIdentifier(
+            "time_$upperNumber", "drawable",
+            context.packageName
+        )
+        var d = resources.getDrawable(
+            resourceId,
+            null
+        )
+        d.setBounds(0, 0, upperBound, upperBound)
+        canvas.translate(dx, 0f)
+        d.draw(canvas)
+        canvas.translate(-dx, 0f)
+
+        val lowerBound = lines.first().first().toInt() / 2
+        resourceId = resources.getIdentifier(
+            "time_$lowerNumber", "drawable",
+            context.packageName
+        )
+        d = resources.getDrawable(
+            resourceId,
+            null
+        )
+        d.setBounds(0, 0, upperBound, upperBound)
+        canvas.translate(dx, upperBound.toFloat())
+        d.draw(canvas)
+        canvas.translate(-dx, -upperBound.toFloat())
+    }
 }
+

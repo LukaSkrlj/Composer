@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.media.SoundPool
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -23,12 +24,16 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
 import com.example.composer.R
 import com.example.composer.models.FavoriteModel
+import com.example.composer.models.Measure
+import com.example.composer.models.MeasureWithNotes
 import com.example.composer.models.Note
+import com.example.composer.viewmodel.MeasureViewModel
 import com.example.composer.viewmodel.NoteViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.firebase.firestore.FirebaseFirestore
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelState
+import java.text.DecimalFormat
 import kotlin.math.roundToInt
 
 
@@ -49,6 +54,7 @@ class Piano : AppCompatActivity() {
     )
     private val speed: Float = 1.0f
     private lateinit var noteViewModel: NoteViewModel
+    private lateinit var measureViewModel: MeasureViewModel
     private lateinit var staff: Staff
     private val lineSpacing = Staff.getSpacing()
     private val initialNotePosition =
@@ -57,9 +63,10 @@ class Piano : AppCompatActivity() {
     // Horizontal space between two notes
     private val horizontalNoteSpacing = 100f
     private var currentNoteDx = 0f
-    private var newNote = Note()
     private var isPlaying = false
     private var isLiked = false
+    private var measuresWithNotes: List<MeasureWithNotes> = emptyList()
+
 
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,8 +78,13 @@ class Piano : AppCompatActivity() {
         val favoritesIcon = findViewById<ImageButton>(R.id.imageHeart)
         staff = findViewById(R.id.staff)
         noteViewModel = ViewModelProvider(this)[NoteViewModel::class.java]
+        measureViewModel = ViewModelProvider(this)[MeasureViewModel::class.java]
+        measureViewModel.measuresWithNotes.observe(this) { measuresWithNotes ->
+            staff.drawNotes(measuresWithNotes)
+            this.measuresWithNotes = measuresWithNotes
+        }
         noteViewModel.notes.observe(this) { notes ->
-            staff.drawNotes(notes)
+            Log.d("piano notes", notes.toString())
         }
 
         findViewById<ImageView>(R.id.back).setOnClickListener{
@@ -173,12 +185,14 @@ class Piano : AppCompatActivity() {
         slidingPaneLayout.addPanelSlideListener(panelListener)
 
         findViewById<Button>(R.id.addNote).setOnClickListener {
-            newNote.dx += horizontalNoteSpacing
-        }
 
-        //So data does not get duplicated
-        //DELETE THIS LINE IN PRODUCTION!!!
+            currentNoteDx += horizontalNoteSpacing
+        }
+        //REMOVE WHEN IN PRODUCTION
         noteViewModel.deleteNotes()
+        measureViewModel.deleteMeasures()
+
+
 
         this.hideSystemBars()
 
@@ -394,7 +408,8 @@ class Piano : AppCompatActivity() {
 
                 blackPianoKey.setOnClickListener {
                     this.soundPool.play(loadedFile, 1f, 1f, 1, 0, speed)
-                    noteViewModel.addNote(Note(right = 82, bottom = 82, dx = 0f, dy = 0f))
+                    //Update this as white keys
+                    //noteViewModel.addNote(Note(right = 82, bottom = 82, dx = 0f, dy = 0f))
                 }
 
                 constraintLayout.addView(blackPianoKey)
@@ -455,22 +470,69 @@ class Piano : AppCompatActivity() {
                 whitePianoKey.setBackgroundResource(R.drawable.white_piano_border)
                 whitePianoKey.stateListAnimator = null
                 var dy = initialNotePosition - (lineSpacing / 2) * lineCounter
+                var measureId = 0
                 whitePianoKey.setOnClickListener {
                     this.soundPool.play(loadedFile, 1f, 1f, 1, 0, speed)
-                    newNote.right = 82
-                    newNote.bottom = 82
-                    newNote.dy = dy
+                    var countSum = 0f
+
+                    val df = DecimalFormat("#.##")
+                    if (measuresWithNotes.isEmpty()) {
+                        val newMeasure = Measure(
+                            id = 0,
+                            timeSignatureTop = 4,
+                            timeSignatureBottom = 4,
+                            keySignature = "c",
+                            compositionId = 0,
+                            clef = "treble"
+                        )
+                        measureViewModel.upsertMeasure(
+                            newMeasure
+                        )
+                    }
+                    if (measuresWithNotes.isNotEmpty()) {
+                        measuresWithNotes.last().notes.distinctBy { it.dx }
+                            .map { note -> countSum += note.length }
+                        //tu je greska
+                        Log.d(
+                            "countSum",
+                            measuresWithNotes.last().notes.distinctBy { it.dx }.toString()
+                        )
+                        Log.d(
+                            "Ovo drugo",
+                            df.format(measuresWithNotes.last().measure.timeSignatureTop / measuresWithNotes.last().measure.timeSignatureBottom.toFloat())
+                        )
+                        if (df.format(countSum) == df.format(measuresWithNotes.last().measure.timeSignatureTop / measuresWithNotes.last().measure.timeSignatureBottom.toFloat())) {
+                            measureId = measuresWithNotes.last().measure.id + 1
+                            Log.d("Measure id", measureId.toString())
+                            val newMeasure = Measure(
+                                id = measureId,
+                                timeSignatureTop = 4,
+                                timeSignatureBottom = 4,
+                                keySignature = "c",
+                                compositionId = 0,
+                                clef = "treble"
+                            )
+                            measureViewModel.upsertMeasure(
+                                newMeasure
+                            )
+                        }
+
+                    }
+
+
                     val note = Note(
                         right = 82,
                         bottom = 82,
-                        dx = 0f,
-                        dy = dy
+                        dx = currentNoteDx,
+                        dy = dy,
+                        measureId = measureId
                     )
 
-                    noteViewModel.addNote(newNote)
+                    noteViewModel.addNote(note)
                 }
 
                 constraintLayout.addView(whitePianoKey)
+
                 lineCounter++
             }
         }

@@ -1,10 +1,7 @@
 package com.example.composer.data
 
 import androidx.lifecycle.LiveData
-import androidx.room.Dao
-import androidx.room.Delete
-import androidx.room.Query
-import androidx.room.Upsert
+import androidx.room.*
 import com.example.composer.models.Note
 
 @Dao
@@ -20,4 +17,7 @@ interface NoteDao {
 
     @Query("SELECT * FROM Note")
     fun getNotes(): LiveData<List<Note>>
+
+    @Query("SELECT MAX(dx) FROM Note")
+    fun getLastNote(): LiveData<Int>
 }
