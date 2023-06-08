@@ -10,15 +10,25 @@ import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
+import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.ProgressBar
+import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
 import com.example.composer.R
+import com.example.composer.models.FavoriteModel
 import com.example.composer.models.Note
 import com.example.composer.viewmodel.NoteViewModel
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.firebase.firestore.FirebaseFirestore
+import com.sothree.slidinguppanel.SlidingUpPanelLayout
+import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelState
 import kotlin.math.roundToInt
 
 
@@ -48,19 +58,119 @@ class Piano : AppCompatActivity() {
     private val horizontalNoteSpacing = 100f
     private var currentNoteDx = 0f
     private var newNote = Note()
+    private var isPlaying = false
+    private var isLiked = false
 
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_piano)
-
+        val slidingPaneLayout = findViewById<SlidingUpPanelLayout>(R.id.sliding_layout)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-
+        val headerCard = findViewById<CardView>(R.id.cardViewHeader)
+        val favoritesIcon = findViewById<ImageButton>(R.id.imageHeart)
         staff = findViewById(R.id.staff)
         noteViewModel = ViewModelProvider(this)[NoteViewModel::class.java]
         noteViewModel.notes.observe(this) { notes ->
             staff.drawNotes(notes)
         }
+
+        findViewById<ImageView>(R.id.back).setOnClickListener{
+            finish()
+        }
+
+        findViewById<ImageButton>(R.id.playButton).setOnClickListener{
+            playSymphony(!isPlaying)
+        }
+
+        val extras = intent.extras
+        if (extras != null) {
+            findViewById<ProgressBar>(R.id.progressBar_cyclic).visibility =
+                View.VISIBLE
+            val db = FirebaseFirestore.getInstance()
+            val symphonyID = extras.getString("symphonyID")
+
+            val document = symphonyID?.let { db.collection("symphonies").document(it) }
+
+            val currentUser = GoogleSignIn.getLastSignedInAccount(this)
+            if (currentUser != null) {
+                favoritesIcon.visibility = View.VISIBLE
+                document?.get()?.addOnSuccessListener { symphony ->
+                    findViewById<TextView>(R.id.symphonyName).text =
+                        symphony.get("symphonyName") as CharSequence?
+
+                    currentUser.id?.let {
+                        checkIfSymphonyIsLiked(
+                            db,
+                            it,
+                            symphonyID
+                        )
+                    }
+
+                    favoritesIcon.setOnClickListener {
+                        if (isLiked) {
+                            addLikeBackground(false)
+                            db.collectionGroup("favorites")
+                                .whereEqualTo("userID", currentUser.id.toString())
+                                .whereEqualTo("symphonyID", symphonyID).get().addOnSuccessListener {
+                                    it.documents.forEach { document ->
+                                        document.reference.delete()
+                                    }
+                                }
+                        } else {
+
+                            val data = FavoriteModel(
+                                symphony.get("symphonyName").toString(),
+                                currentUser.id.toString(),
+                                symphonyID,
+                                (symphony.get("symphonyDurationSeconds") as Long).toInt(),
+                                symphony.get("symphonyComposer").toString(),
+                                currentUser.displayName.toString()
+                            )
+
+                            addLikeBackground(true)
+                            db.collection("favorites").add(data)
+                        }
+                    }
+
+                }
+            } else {
+                findViewById<ProgressBar>(R.id.progressBar_cyclic).visibility =
+                    View.GONE
+                favoritesIcon.visibility = View.GONE
+            }
+        }
+
+
+        val panelListener = object :
+            SlidingUpPanelLayout.PanelSlideListener {
+            override fun onPanelSlide(panel: View?, slideOffset: Float) {
+
+            }
+
+            override fun onPanelStateChanged(
+                panel: View?,
+                previousState: PanelState?,
+                newState: PanelState?
+            ) {
+                if (newState?.name == "EXPANDED") {
+                    playSymphony(false)
+                    headerCard.animate().translationY(
+                        -headerCard.height
+                            .toFloat()
+                    ).withEndAction {
+                        headerCard.visibility = View.GONE
+                    };
+                } else if (newState?.name == "COLLAPSED") {
+                    headerCard.visibility = View.VISIBLE
+                    headerCard.animate().translationY(0F)
+
+                }
+            }
+
+        }
+
+        slidingPaneLayout.addPanelSlideListener(panelListener)
 
         findViewById<Button>(R.id.addNote).setOnClickListener {
             newNote.dx += horizontalNoteSpacing
@@ -230,6 +340,18 @@ class Piano : AppCompatActivity() {
         }
     }
 
+    private fun playSymphony(playSymphony: Boolean) {
+        isPlaying = playSymphony
+        val playButton= findViewById<ImageButton>(R.id.playButton)
+        if (playSymphony) {
+            playButton.setImageResource(R.drawable.ic_pause)
+            staff.setIsMusicPlaying(true)
+        } else {
+            playButton.setImageResource(R.drawable.ic_play)
+            staff.setIsMusicPlaying(false)
+        }
+    }
+
     private fun addBlackPianoKeys(whiteKeyWidth: Int, whiteKeyHeight: Int) {
         val blacKeyWidth: Int = (whiteKeyWidth * 0.63).roundToInt()
         val blackKeyHeight: Int = (whiteKeyHeight * 0.6).roundToInt()
@@ -373,4 +495,37 @@ class Piano : AppCompatActivity() {
             )
         }
     }
+private fun checkIfSymphonyIsLiked(
+    db: FirebaseFirestore,
+    userID: String,
+    symphonyID: String
+) {
+    db.collectionGroup("favorites")
+        .whereEqualTo("userID", userID)
+        .whereEqualTo("symphonyID", symphonyID).get()
+        .addOnCompleteListener {
+            findViewById<ProgressBar>(R.id.progressBar_cyclic).visibility =
+                View.GONE
+            if (it.result.isEmpty) {
+                addLikeBackground(false)
+
+            } else {
+                addLikeBackground(true)
+            }
+        }
 }
+    private fun addLikeBackground(colorBackground: Boolean) {
+        isLiked = colorBackground
+        val favoritesButton = findViewById<ImageButton>(R.id.imageHeart)
+        if (colorBackground) {
+            favoritesButton.setImageResource(R.drawable.ic_favorite_full)
+
+        } else {
+            favoritesButton.setImageResource(R.drawable.ic_favorite_empty)
+        }
+    }
+}
+
+
+
+

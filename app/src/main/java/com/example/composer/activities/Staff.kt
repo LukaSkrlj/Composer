@@ -4,6 +4,8 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.drawable.Drawable
+import android.os.Handler
+import android.os.Looper
 import android.util.AttributeSet
 import android.view.View
 import androidx.core.content.res.ResourcesCompat
@@ -24,6 +26,8 @@ class Staff @JvmOverloads constructor(
     }
 
     private val barLinePaint = Paint()
+    private val playingLinePaint = Paint()
+    private var xPositionPlayingLine = 0f
 
     private val notesDrawable: Array<String> = arrayOf(
         "accidental_doubleflat",
@@ -102,6 +106,7 @@ class Staff @JvmOverloads constructor(
     private var lines: Array<Array<Float>> = arrayOf()
 
     private var notes: List<Note> = listOf()
+    private var isMusicPlaying: Boolean = false
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -131,6 +136,9 @@ class Staff @JvmOverloads constructor(
             canvas.translate(-note.dx, -note.dy)
         }
         this.drawEnd(canvas)
+        if (isMusicPlaying) {
+            this.drawPlayingLine(canvas, xPositionPlayingLine)
+        }
     }
 
 
@@ -138,6 +146,12 @@ class Staff @JvmOverloads constructor(
         notes = notesList
         invalidate()
     }
+
+    fun setIsMusicPlaying(isMusicPlaying: Boolean) {
+        this.isMusicPlaying = isMusicPlaying
+        invalidate()
+    }
+
 
 //    private fun setNotesSize() {
 //        val notesHeight = lines.last().last().toInt()
@@ -307,36 +321,42 @@ class Staff @JvmOverloads constructor(
                     10 + signatureWidth,
                     (lineSpacing / 2).toInt() + signatureHeight
                 )
+
                 2 -> signatureArray[i]?.setBounds(
                     30,
                     -(lineSpacing + 0.2 * lineThickness).toInt(),
                     30 + signatureWidth,
                     -(lineSpacing + 0.2 * lineThickness).toInt() + signatureHeight
                 )
+
                 3 -> signatureArray[i]?.setBounds(
                     55,
                     (lineSpacing / 1).toInt(),
                     55 + signatureWidth,
                     (lineSpacing / 1).toInt() + signatureHeight
                 )
+
                 4 -> signatureArray[i]?.setBounds(
                     75,
                     -(lineSpacing / 5 + 3 * lineThickness).toInt(),
                     75 + signatureWidth,
                     -(lineSpacing / 5 + 3 * lineThickness).toInt() + signatureHeight
                 )
+
                 5 -> signatureArray[i]?.setBounds(
                     100,
                     (1.6 * lineSpacing).toInt(),
                     100 + signatureWidth,
                     (1.6 * lineSpacing).toInt() + signatureHeight
                 )
+
                 6 -> signatureArray[i]?.setBounds(
                     125,
                     -(lineSpacing / 25).toInt(),
                     125 + signatureWidth,
                     -(lineSpacing / 25).toInt() + signatureHeight
                 )
+
                 7 -> signatureArray[i]?.setBounds(
                     150,
                     (2 * lineSpacing).toInt(),
@@ -367,5 +387,36 @@ class Staff @JvmOverloads constructor(
             barLine[3],
             thickLinePaint
         )
+    }
+
+    private fun drawPlayingLine(canvas: Canvas, x: Float) {
+        playingLinePaint.strokeWidth = 10F
+
+
+
+        val handler = Handler(Looper.getMainLooper());
+        val movePlayer0Runnable = object : Runnable {
+            override fun run() {
+                canvas.drawLine(
+                    x,
+                    0f,
+                    x,
+                    canvas.height.toFloat(),
+                    playingLinePaint
+                )
+                xPositionPlayingLine += 0.1f
+                invalidate(); //will trigger the onDraw
+                handler.postDelayed(this, 1); //in 5 sec player0 will move again
+            }
+        }
+
+        if (x.compareTo(canvas.width) == 0 || x.compareTo(canvas.width) == 1) {
+            isMusicPlaying = false
+            xPositionPlayingLine = 0f
+            return
+        }
+        movePlayer0Runnable.run()
+
+
     }
 }
