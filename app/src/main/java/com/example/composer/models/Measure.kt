@@ -5,9 +5,9 @@ import androidx.room.PrimaryKey
 
 @Entity
 data class Measure(
-    @PrimaryKey(autoGenerate = true) var id: Int = 0,
-    var timeSignatureTop: Int,
-    var timeSignatureBottom: Int,
+    @PrimaryKey() var id: Int = 0,
+    var timeSignatureTop: Int = 4,
+    var timeSignatureBottom: Int = 4,
     var keySignature: String,
     var compositionId: Int,
     var clef: String

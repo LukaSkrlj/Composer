@@ -1,11 +1,10 @@
 package com.example.composer.data
 
 import androidx.lifecycle.LiveData
-import androidx.room.Dao
-import androidx.room.Delete
-import androidx.room.Query
-import androidx.room.Upsert
+import androidx.room.*
 import com.example.composer.models.Measure
+import com.example.composer.models.MeasureWithNotes
+import com.example.composer.models.Note
 
 @Dao
 interface MeasureDao {
@@ -17,4 +16,17 @@ interface MeasureDao {
 
     @Query("SELECT * FROM Measure")
     fun getMeasures(): LiveData<List<Measure>>
+
+
+    @Query(
+        "SELECT * FROM Measure JOIN Note ON Measure.id = Note.measure_id"
+    )
+    fun loadMeasureMap(): Map<Measure, List<Note>>
+
+    @Query("SELECT * FROM Measure")
+    fun test(): LiveData<List<MeasureWithNotes>>
+
+    @Query("DELETE FROM Measure")
+    fun deleteMeasures(): Void
+
 }
