@@ -1,14 +1,20 @@
 package com.example.composer.adapters
 
 import android.content.Context
+import android.content.Intent
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.example.composer.R
+import com.example.composer.activities.MainActivity
+import com.example.composer.activities.SymphonyActivity
 import com.example.composer.models.MusicModel
 
 class SymphoniesAdapter(
@@ -34,6 +40,17 @@ class SymphoniesAdapter(
         val timeString = String.format("%02d:%02d", minutes, seconds);
 
         holder.duration?.text = timeString
+
+        holder.cardView?.setOnClickListener {
+            context.startActivity(
+                Intent(
+                    context,
+                    SymphonyActivity::class.java
+                ).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    .putExtra("symphonyID", symphoniesList[position].id)
+            )
+        }
+
     }
 
     override fun getItemCount(): Int {
@@ -45,12 +62,14 @@ class SymphoniesAdapter(
         var composerName: TextView? = null
         var symphonyName: TextView? = null
         var duration: TextView? = null
+        var cardView: ConstraintLayout? = null
 
         init {
             symphonyImage = itemView.findViewById(R.id.symphonyImage)
             composerName = itemView.findViewById(R.id.composerName)
             symphonyName = itemView.findViewById(R.id.symphonyName)
             duration = itemView.findViewById(R.id.duration)
+            cardView = itemView.findViewById(R.id.columnContainer)
         }
     }
 }

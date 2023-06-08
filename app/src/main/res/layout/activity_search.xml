@@ -6,11 +6,12 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <FrameLayout
+    <androidx.cardview.widget.CardView
         android:id="@+id/frameLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="10dp"
+        app:cardElevation="0dp"
         >
 
         <LinearLayout
@@ -40,7 +41,7 @@
                 app:queryBackground="@android:color/transparent"
                 app:searchIcon="@null" />
         </LinearLayout>
-    </FrameLayout>
+    </androidx.cardview.widget.CardView>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/searchRecyclerView"

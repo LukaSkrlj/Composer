@@ -2,20 +2,26 @@ package com.example.composer.activities
 
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import android.Manifest
 import com.example.composer.R
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.messaging.FirebaseMessaging
 
 
 class LoginActivity : AppCompatActivity() {
@@ -28,13 +34,19 @@ class LoginActivity : AppCompatActivity() {
         setContentView(R.layout.activity_login)
 
         gso =
-            GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).requestEmail().build()
+            GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).requestEmail()
+                .requestIdToken("775057639726-epuaebb4trg7pv0q298g2ds1q6eqlko3.apps.googleusercontent.com")
+                .build()
         gsc = GoogleSignIn.getClient(this, gso)
 
         findViewById<AppCompatButton>(R.id.signInBtn).setOnClickListener {
             signIn()
         }
         findViewById<Button>(R.id.guestLogin).setOnClickListener {
+            val lastUser = GoogleSignIn.getLastSignedInAccount(this)
+            if (lastUser != null) {
+                gsc.signOut()
+            }
             navigateToMain()
         }
 
@@ -55,11 +67,7 @@ class LoginActivity : AppCompatActivity() {
     private var resultLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
-                // There are no request codes
-                val data: Intent? = result.data
-                val task = GoogleSignIn.getSignedInAccountFromIntent(data)
                 try {
-                    task.result
                     navigateToMain()
                 } catch (e: ApiException) {
                     Toast.makeText(applicationContext, "Something went wrong", Toast.LENGTH_SHORT)

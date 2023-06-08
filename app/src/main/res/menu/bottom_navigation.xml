@@ -9,4 +9,15 @@
         android:id="@+id/mySymphoniesFragment"
         android:icon="@drawable/music_list_icon"
         android:title="My symphonies" />
+    <item
+        android:id="@+id/profileInfoFragment"
+        android:icon="@drawable/ic_profile"
+        android:title="Profile" />
+
+
+    <item
+        android:id="@+id/return_login"
+        android:icon="@drawable/ic_logout"
+        android:title="Exit"
+        android:visible="false" />
 </menu>

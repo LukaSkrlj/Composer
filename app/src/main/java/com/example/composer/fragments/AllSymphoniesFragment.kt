@@ -1,4 +1,4 @@
-package com.example.composer
+package com.example.composer.fragments
 
 import android.os.Bundle
 import android.util.Log
@@ -11,37 +11,18 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.example.composer.R
 import com.example.composer.adapters.SymphoniesAdapter
 import com.example.composer.models.MusicModel
+import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.Source
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-const val LIMIT: Long = 10
-var isGettingNewData = false
 
-/**
- * A simple [Fragment] subclass.
- * Use the [AllSymphoniesFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class AllSymphoniesFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
-
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-
-    }
+    var isGettingNewData = false
+    val LIMIT: Long = 10
 
 
     override fun onCreateView(
@@ -50,7 +31,6 @@ class AllSymphoniesFragment : Fragment() {
     ): View? {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_all_symphonies, container, false)
-
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -58,7 +38,6 @@ class AllSymphoniesFragment : Fragment() {
         val swipeToRefresh = view.findViewById(R.id.swipeToRefresh) as SwipeRefreshLayout
         swipeToRefresh.setOnRefreshListener {
             getDataFromServer()
-            swipeToRefresh.isRefreshing = false
         }
         getDataFromServer()
     }
@@ -66,22 +45,30 @@ class AllSymphoniesFragment : Fragment() {
 
     private fun getDataFromServer() {
         val recyclerViewVertical = view?.findViewById(R.id.symphoniesList) as RecyclerView
-        val recyclerViewHorizontal = view?.findViewById(R.id.newSymphonies) as RecyclerView
+        val recyclerViewHorizontal = view?.findViewById(R.id.mostLikedSymphonies) as RecyclerView
         val db = FirebaseFirestore.getInstance()
         val musicListAll: ArrayList<MusicModel> = arrayListOf()
-        val musicListNewest: ArrayList<MusicModel> = arrayListOf()
+        val musicListMostLiked: ArrayList<MusicModel> = arrayListOf()
         val docRefAll = db.collection("symphonies").limit(LIMIT)
-        val docRefNewest = db.collection("symphonies").limit(LIMIT)
+        val docRefMostLiked = db.collection("symphonies").orderBy("likes", Query.Direction.DESCENDING).limit(LIMIT)
         var isScrolling = false
         var isLastItemReached = false
 
         docRefAll.get(Source.SERVER)
             .addOnSuccessListener { collection ->
+                (view?.findViewById(R.id.swipeToRefresh) as SwipeRefreshLayout).isRefreshing = false
                 if (collection != null) {
                     requireView().findViewById<ProgressBar>(R.id.progressBar_cyclic).visibility =
                         View.GONE
                     for (document in collection.documents) {
-                        document.toObject(MusicModel::class.java)?.let { musicListAll.add(it) }
+                        musicListAll.add(
+                            MusicModel(
+                                document.get("symphonyName") as String?,
+                                document.get("symphonyComposer") as String?,
+                                (document.get("symphonyDurationSeconds") as Long).toInt(),
+                                document.id
+                            )
+                        )
                     }
                     val allSymphoniesAdapter =
                         activity?.let { SymphoniesAdapter(it, musicListAll, R.layout.music_row) }
@@ -125,8 +112,14 @@ class AllSymphoniesFragment : Fragment() {
                                     isGettingNewData = false
                                     if (newCollection.result != null) {
                                         for (document in newCollection.result.documents) {
-                                            document.toObject(MusicModel::class.java)
-                                                ?.let { musicListAll.add(it) }
+                                            musicListAll.add(
+                                                MusicModel(
+                                                    document.get("symphonyName") as String?,
+                                                    document.get("symphonyComposer") as String?,
+                                                    (document.get("symphonyDurationSeconds") as Long).toInt(),
+                                                    document.id
+                                                )
+                                            )
                                         }
 
                                         allSymphoniesAdapter?.notifyDataSetChanged()
@@ -151,22 +144,29 @@ class AllSymphoniesFragment : Fragment() {
                 Log.d("Document data", "get failed with ", exception)
             }
 
-        docRefNewest.get(Source.SERVER).addOnSuccessListener { collection ->
+        docRefMostLiked.get(Source.SERVER).addOnSuccessListener { collection ->
             if (collection != null) {
                 for (document in collection.documents) {
-                    document.toObject(MusicModel::class.java)?.let { musicListNewest.add(it) }
+                    musicListMostLiked.add(
+                        MusicModel(
+                            document.get("symphonyName") as String?,
+                            document.get("symphonyComposer") as String?,
+                            (document.get("symphonyDurationSeconds") as Long).toInt(),
+                            document.id
+                        )
+                    )
                 }
 
-                val newSymphoniesAdapter =
+                val mostLikedSymphoniesAdapter =
                     activity?.let {
                         SymphoniesAdapter(
                             it,
-                            musicListNewest,
+                            musicListMostLiked,
                             R.layout.music_column
                         )
                     }
 
-                recyclerViewHorizontal.adapter = newSymphoniesAdapter
+                recyclerViewHorizontal.adapter = mostLikedSymphoniesAdapter
                 recyclerViewHorizontal.layoutManager =
                     LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
 
@@ -178,24 +178,4 @@ class AllSymphoniesFragment : Fragment() {
         }
     }
 
-
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment AllSymphoniesFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            AllSymphoniesFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
-            }
-    }
 }
