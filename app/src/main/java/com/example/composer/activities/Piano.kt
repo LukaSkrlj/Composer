@@ -6,7 +6,6 @@ import android.graphics.Color
 import android.media.SoundPool
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -24,7 +23,7 @@ import kotlin.math.roundToInt
 
 
 class Piano : AppCompatActivity() {
-    private val soundPool: SoundPool = SoundPool.Builder().setMaxStreams(100).build()
+    private val soundPool: SoundPool = SoundPool.Builder().setMaxStreams(10).build()
     private val whiteKeys = setOf<String>("a", "b", "c", "d", "e", "f", "g")
     private val blackKeys = setOf<String>("db", "eb", "gb", "ab", "bb")
     private val octaveColor = arrayOf<String>(
@@ -42,13 +41,18 @@ class Piano : AppCompatActivity() {
     private lateinit var noteViewModel: NoteViewModel
     private lateinit var staff: Staff
     private val lineSpacing = Staff.getSpacing()
-    private val initialNotePosition = (lineSpacing / 2 * 26).toInt()
+    private val initialNotePosition =
+        lineSpacing.toInt() * 13
+
+    // Horizontal space between two notes
+    private val horizontalNoteSpacing = 100f
+    private var currentNoteDx = 0f
+    private var newNote = Note()
 
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_piano)
-
 
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
@@ -57,13 +61,16 @@ class Piano : AppCompatActivity() {
         noteViewModel.notes.observe(this) { notes ->
             staff.drawNotes(notes)
         }
+
+        findViewById<Button>(R.id.addNote).setOnClickListener {
+            newNote.dx += horizontalNoteSpacing
+        }
+
         //So data does not get duplicated
         //DELETE THIS LINE IN PRODUCTION!!!
         noteViewModel.deleteNotes()
 
         this.hideSystemBars()
-
-        this.demoTest()
 
         this.addWhitePianoKeys()
     }
@@ -98,14 +105,6 @@ class Piano : AppCompatActivity() {
                     or View.SYSTEM_UI_FLAG_FULLSCREEN
                     or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
         }
-    }
-
-    private fun demoTest() {
-        var c3Id = soundPool.load(this, R.raw.c3, 1)/*
-        findViewById<Button>(R.id.A0)
-            .setOnClickListener {
-                this.soundPool.play(c3Id, 1f, 1f, 1, 0, speed)
-            }*/
     }
 
 
@@ -201,7 +200,6 @@ class Piano : AppCompatActivity() {
                 noteNumber
             )
 
-
         } else if (newKey.contains("ab")) {
             val rightBoundaryChar = 'b'
             val leftBoundaryChar = 'f'
@@ -286,8 +284,6 @@ class Piano : AppCompatActivity() {
             }
         }
         constraintSet.applyTo(constraintLayout)
-
-
     }
 
     private fun addWhitePianoKeys() {
@@ -331,7 +327,6 @@ class Piano : AppCompatActivity() {
                 chainIds[lineCounter] = whitePianoKey.id
 
 
-
                 whitePianoKey.text = newKey
                 whitePianoKey.gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
                 whitePianoKey.setTextColor(Color.parseColor(octaveColor[octave]))
@@ -340,22 +335,23 @@ class Piano : AppCompatActivity() {
                 var dy = initialNotePosition - (lineSpacing / 2) * lineCounter
                 whitePianoKey.setOnClickListener {
                     this.soundPool.play(loadedFile, 1f, 1f, 1, 0, speed)
+                    newNote.right = 82
+                    newNote.bottom = 82
+                    newNote.dy = dy
                     val note = Note(
                         right = 82,
                         bottom = 82,
                         dx = 0f,
                         dy = dy
                     )
-                    Log.d("aaa", note.toString())
-                    noteViewModel.addNote(note)
+
+                    noteViewModel.addNote(newNote)
                 }
 
                 constraintLayout.addView(whitePianoKey)
                 lineCounter++
             }
-
         }
-
 
         constraintSet.createHorizontalChain(
             ConstraintSet.PARENT_ID,
@@ -376,6 +372,5 @@ class Piano : AppCompatActivity() {
                 whitePianoTile.measuredHeight
             )
         }
-
     }
 }

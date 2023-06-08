@@ -59,6 +59,11 @@ class LoginActivity : AppCompatActivity() {
             window.decorView
         ).isAppearanceLightStatusBars = false;
 
+//        findViewById<Button>(R.id.openPiano).setOnClickListener {
+//            val intent = Intent(this, Piano::class.java)
+//            startActivity(intent)
+//        }
+
 
     }
 
@@ -70,8 +75,6 @@ class LoginActivity : AppCompatActivity() {
     private var resultLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
-                // There are no request codes
-                val data: Intent? = result.data
                 try {
                     navigateToMain()
                 } catch (e: ApiException) {
