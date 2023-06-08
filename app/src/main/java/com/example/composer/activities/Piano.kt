@@ -11,6 +11,7 @@ import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
+import android.widget.ImageButton
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -74,7 +75,7 @@ class Piano : AppCompatActivity() {
             Log.d("piano notes", notes.toString())
         }
 
-        findViewById<Button>(R.id.addNote).setOnClickListener {
+        findViewById<ImageButton>(R.id.addNote).setOnClickListener {
 
             currentNoteDx += horizontalNoteSpacing
         }

@@ -9,48 +9,59 @@
     android:orientation="horizontal"
     tools:context=".activities.Piano">
 
-    <com.sothree.slidinguppanel.SlidingUpPanelLayout xmlns:sothree="http://schemas.android.com/apk/res-auto"
+    <com.sothree.slidinguppanel.SlidingUpPanelLayout
         android:id="@+id/sliding_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="bottom"
-        sothree:umanoFadeColor="@android:color/transparent"
-        sothree:umanoShadowHeight="0dp"
+        app:umanoFadeColor="@android:color/transparent"
+        app:umanoShadowHeight="0dp"
         tools:ignore="MissingClass">
 
         <!--Content other than piano put in this layout (it doesn't need to be relative)-->
 
-        <RelativeLayout
+        <!--        <HorizontalScrollView-->
+        <!--            android:id="@+id/viewing"-->
+        <!--            android:layout_width="wrap_content"-->
+        <!--            android:layout_height="match_parent"-->
+        <!--            android:layout_alignParentBottom="true">-->
+
+
+        <!--            <com.example.composer.activities.Staff-->
+        <!--                android:id="@+id/staff"-->
+        <!--                android:layout_width="250dp"-->
+        <!--                android:layout_height="150dp"-->
+        <!--                android:layout_marginStart="10dp"-->
+        <!--                android:layout_marginTop="10dp"-->
+        <!--                android:layout_marginEnd="10dp"-->
+        <!--                android:layout_marginBottom="10dp" />-->
+        <!--        </HorizontalScrollView>-->
+
+        <HorizontalScrollView
             android:id="@+id/viewing"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:contentDescription="Main content put here"
-            android:gravity="top">
+            android:layout_alignParentBottom="true">
 
-            <com.example.composer.activities.Staff
-                android:id="@+id/staff"
-                android:layout_width="239dp"
-                android:layout_height="133dp"
-                android:layout_marginStart="10dp"
-                android:layout_marginTop="10dp"
-                android:layout_marginEnd="10dp"
-                android:layout_marginBottom="10dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
-
-            <Button
-                android:id="@+id/addNote"
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentTop="true"
-                android:layout_marginStart="162dp"
-                android:layout_marginTop="22dp"
-                android:layout_marginEnd="485dp"
-                android:layout_toEndOf="@+id/staff"
-                android:text="Next" />
+                android:layout_height="300dp"
+                android:layout_above="@id/scrollContainer">
 
-        </RelativeLayout>
+                <com.example.composer.activities.Staff
+                    android:id="@+id/staff"
+                    android:layout_width="match_parent"
+                    android:layout_height="133dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_marginBottom="10dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </HorizontalScrollView>
 
         <RelativeLayout
             android:id="@+id/pianoContainer"
@@ -60,13 +71,13 @@
             android:gravity="bottom">
 
             <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/dragDownContainer"
                 android:layout_width="match_parent"
                 android:layout_height="30dp"
                 android:layout_above="@id/scrollContainer"
                 android:background="@drawable/droppable_view_border_radius">
 
                 <ImageView
+                    android:id="@+id/dragDownButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:src="@drawable/baseline_drag_handle_24"
@@ -74,6 +85,18 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
+
+                <ImageButton
+                    android:id="@+id/addNote"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@color/black"
+                    android:src="@drawable/baseline_navigate_next_24"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="@+id/dragDownButton"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:tint="@color/white" />
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <HorizontalScrollView
