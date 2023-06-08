@@ -150,7 +150,7 @@ class FavoritesFragment : Fragment() {
                             }
 
                         })
-                        TODO("Implement later if enough time")
+                    
 //                        handleDragAndDrop(musicListFavorites)
                     } else {
                         Log.d("Document data", "No such document")

@@ -146,7 +146,6 @@ class MySymphoniesFragment : Fragment() {
                         }
 
                     })
-                    TODO("Implement later if enough time")
 //                    handleDragAndDrop(symphonyList)
                 } else {
                     Log.d("Document data", "No such document")
