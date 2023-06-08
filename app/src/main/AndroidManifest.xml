@@ -22,6 +22,9 @@
         <activity android:name=".activities.SearchActivity" />
         <activity android:name=".activities.LoginActivity" />
         <activity
+            android:name=".activities.SymphonyActivity"
+            android:screenOrientation="landscape" />
+        <activity
             android:name=".activities.SplashActivity"
             android:exported="true">
             <intent-filter>
@@ -30,6 +33,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-    </application>
 
+        <service
+            android:name=".notifications.SymphonyLikedNotificationService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+    </application>
 </manifest>

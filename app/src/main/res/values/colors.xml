@@ -9,5 +9,6 @@
     <color name="white">#FFFFFFFF</color>
     <color name="light_blue">#5FBCD3</color>
     <color name="inactive_footer_btn">#a3a4da</color>
+    <color name="grey">#D8D8D8 </color>
     <color name="login_background_color">#121C32</color>
 </resources>

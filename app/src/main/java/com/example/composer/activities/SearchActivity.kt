@@ -10,8 +10,8 @@ import androidx.appcompat.widget.SearchView
 import com.example.composer.R
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.composer.SearchAdapter
-import com.example.composer.SearchResult
+import com.example.composer.adapters.SearchAdapter
+import com.example.composer.models.SearchResult
 import com.google.firebase.firestore.FirebaseFirestore
 
 
@@ -30,8 +30,7 @@ class SearchActivity : AppCompatActivity() {
         search.onActionViewExpanded()
 
         findViewById<ImageButton>(R.id.backButton).setOnClickListener {
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
+            finish()
         }
 
         search.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
@@ -55,7 +54,8 @@ class SearchActivity : AppCompatActivity() {
                                         searchResult.add(
                                             SearchResult(
                                                 symphonyComposer,
-                                                symphonyName
+                                                symphonyName,
+                                                document.id
                                             )
                                         )
                                     }
