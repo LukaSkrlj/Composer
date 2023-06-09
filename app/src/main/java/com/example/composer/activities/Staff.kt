@@ -9,6 +9,7 @@ import android.os.Looper
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
+import android.view.ViewGroup
 import androidx.core.content.res.ResourcesCompat
 import com.example.composer.R
 import com.example.composer.models.MeasureWithNotes
@@ -118,7 +119,8 @@ class Staff @JvmOverloads constructor(
 
             //Measure start position
             val currentMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
-
+//            measure(currentMeasureEnd.toInt(), 500)
+            this.layoutParams = ViewGroup.LayoutParams(currentMeasureEnd.toInt(), 500)
             //Bar line
             canvas.drawLine(
                 barLine[0] + currentMeasureEnd,
@@ -177,6 +179,11 @@ class Staff @JvmOverloads constructor(
 
         this.drawEnd(canvas, previousMeasureEnd)
 
+    }
+
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        setMeasuredDimension(widthMeasureSpec, heightMeasureSpec)
     }
 
 

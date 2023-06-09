@@ -30,24 +30,36 @@
 
         <!--Content other than piano put in this layout (it doesn't need to be relative)-->
 
+        <!--        <HorizontalScrollView-->
+        <!--            android:id="@+id/viewing"-->
+        <!--            android:layout_width="wrap_content"-->
+        <!--            android:layout_height="match_parent"-->
+        <!--            android:layout_alignParentBottom="true">-->
+
+
+        <!--            <com.example.composer.activities.Staff-->
+        <!--                android:id="@+id/staff"-->
+        <!--                android:layout_width="250dp"-->
+        <!--                android:layout_height="150dp"-->
+        <!--                android:layout_marginStart="10dp"-->
+        <!--                android:layout_marginTop="10dp"-->
+        <!--                android:layout_marginEnd="10dp"-->
+        <!--                android:layout_marginBottom="10dp" />-->
+        <!--        </HorizontalScrollView>-->
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/viewing"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:contentDescription="Main content put here"
-            android:gravity="top">
+            android:layout_height="wrap_content">
 
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardViewHeader"
-                android:animateLayoutChanges="true"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:animateLayoutChanges="true"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
-
                     android:layout_width="match_parent"
                     android:layout_height="40dp"
                     android:orientation="horizontal">
@@ -119,27 +131,34 @@
                 </androidx.constraintlayout.widget.ConstraintLayout>
             </androidx.cardview.widget.CardView>
 
-            <com.example.composer.activities.Staff
-                android:id="@+id/staff"
-                android:layout_width="239dp"
-                android:layout_height="133dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginStart="10dp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/cardViewHeader" />
 
-            <Button
-                android:id="@+id/addNote"
+            <HorizontalScrollView
+                android:id="@+id/viewing"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentTop="true"
-                android:layout_toEndOf="@+id/staff"
-                android:text="Next"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/staff"
-                app:layout_constraintTop_toBottomOf="@+id/cardViewHeader" />
+                android:layout_height="300dp"
+                android:contentDescription="Main content put here"
+                android:gravity="top"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/cardViewHeader">
 
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="300dp">
+
+                    <com.example.composer.activities.Staff
+                        android:id="@+id/staff"
+                        android:layout_width="239dp"
+                        android:layout_height="133dp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintHorizontal_bias="0.0"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </HorizontalScrollView>
         </androidx.constraintlayout.widget.ConstraintLayout>
+
 
         <RelativeLayout
             android:id="@+id/pianoContainer"
@@ -149,13 +168,13 @@
             android:gravity="bottom">
 
             <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/dragDownContainer"
                 android:layout_width="match_parent"
                 android:layout_height="30dp"
                 android:layout_above="@id/scrollContainer"
                 android:background="@drawable/droppable_view_border_radius">
 
                 <ImageView
+                    android:id="@+id/dragDownButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:src="@drawable/baseline_drag_handle_24"
@@ -163,6 +182,18 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
+
+                <ImageButton
+                    android:id="@+id/addNote"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@color/black"
+                    android:src="@drawable/baseline_navigate_next_24"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="@+id/dragDownButton"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:tint="@color/white" />
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <HorizontalScrollView

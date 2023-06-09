@@ -87,6 +87,7 @@ class Piano : AppCompatActivity() {
             Log.d("piano notes", notes.toString())
         }
 
+
         findViewById<ImageView>(R.id.back).setOnClickListener {
             finish()
         }
