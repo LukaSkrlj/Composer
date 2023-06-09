@@ -150,7 +150,7 @@ class FavoritesFragment : Fragment() {
                             }
 
                         })
-                    
+
 //                        handleDragAndDrop(musicListFavorites)
                     } else {
                         Log.d("Document data", "No such document")

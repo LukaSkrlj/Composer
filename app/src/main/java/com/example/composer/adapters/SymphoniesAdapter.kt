@@ -14,13 +14,15 @@ import androidx.fragment.app.FragmentActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.example.composer.R
 import com.example.composer.activities.MainActivity
+import com.example.composer.activities.Piano
 import com.example.composer.activities.SymphonyActivity
 import com.example.composer.models.MusicModel
 
 class SymphoniesAdapter(
     var context: Context,
     var symphoniesList: ArrayList<MusicModel>,
-    val layoutID: Int
+    val layoutID: Int,
+    val isSymphonyMine: Boolean = false
 ) : RecyclerView.Adapter<SymphoniesAdapter.ViewHolder>() {
 
 
@@ -40,12 +42,11 @@ class SymphoniesAdapter(
         val timeString = String.format("%02d:%02d", minutes, seconds);
 
         holder.duration?.text = timeString
-
         holder.cardView?.setOnClickListener {
             context.startActivity(
                 Intent(
                     context,
-                    SymphonyActivity::class.java
+                    if(isSymphonyMine)  Piano::class.java else SymphonyActivity::class.java
                 ).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     .putExtra("symphonyID", symphoniesList[position].id)
             )

@@ -76,7 +76,7 @@ class MySymphoniesFragment : Fragment() {
                         )
                     }
                     val allSymphoniesAdapter =
-                        activity?.let { SymphoniesAdapter(it, symphonyList, R.layout.music_row) }
+                        activity?.let { SymphoniesAdapter(it, symphonyList, R.layout.music_row, true) }
 
                     recyclerView.adapter = allSymphoniesAdapter
                     recyclerView.layoutManager = LinearLayoutManager(activity)
