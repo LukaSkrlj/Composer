@@ -87,11 +87,11 @@ class Piano : AppCompatActivity() {
             Log.d("piano notes", notes.toString())
         }
 
-        findViewById<ImageView>(R.id.back).setOnClickListener{
+        findViewById<ImageView>(R.id.back).setOnClickListener {
             finish()
         }
 
-        findViewById<ImageButton>(R.id.playButton).setOnClickListener{
+        findViewById<ImageButton>(R.id.playButton).setOnClickListener {
             playSymphony(!isPlaying)
         }
 
@@ -356,7 +356,7 @@ class Piano : AppCompatActivity() {
 
     private fun playSymphony(playSymphony: Boolean) {
         isPlaying = playSymphony
-        val playButton= findViewById<ImageButton>(R.id.playButton)
+        val playButton = findViewById<ImageButton>(R.id.playButton)
         if (playSymphony) {
             playButton.setImageResource(R.drawable.ic_pause)
             staff.setIsMusicPlaying(true)
@@ -503,7 +503,6 @@ class Piano : AppCompatActivity() {
                         )
                         if (df.format(countSum) == df.format(measuresWithNotes.last().measure.timeSignatureTop / measuresWithNotes.last().measure.timeSignatureBottom.toFloat())) {
                             measureId = measuresWithNotes.last().measure.id + 1
-                            Log.d("Measure id", measureId.toString())
                             val newMeasure = Measure(
                                 id = measureId,
                                 timeSignatureTop = 4,
@@ -557,25 +556,27 @@ class Piano : AppCompatActivity() {
             )
         }
     }
-private fun checkIfSymphonyIsLiked(
-    db: FirebaseFirestore,
-    userID: String,
-    symphonyID: String
-) {
-    db.collectionGroup("favorites")
-        .whereEqualTo("userID", userID)
-        .whereEqualTo("symphonyID", symphonyID).get()
-        .addOnCompleteListener {
-            findViewById<ProgressBar>(R.id.progressBar_cyclic).visibility =
-                View.GONE
-            if (it.result.isEmpty) {
-                addLikeBackground(false)
 
-            } else {
-                addLikeBackground(true)
+    private fun checkIfSymphonyIsLiked(
+        db: FirebaseFirestore,
+        userID: String,
+        symphonyID: String
+    ) {
+        db.collectionGroup("favorites")
+            .whereEqualTo("userID", userID)
+            .whereEqualTo("symphonyID", symphonyID).get()
+            .addOnCompleteListener {
+                findViewById<ProgressBar>(R.id.progressBar_cyclic).visibility =
+                    View.GONE
+                if (it.result.isEmpty) {
+                    addLikeBackground(false)
+
+                } else {
+                    addLikeBackground(true)
+                }
             }
-        }
-}
+    }
+
     private fun addLikeBackground(colorBackground: Boolean) {
         isLiked = colorBackground
         val favoritesButton = findViewById<ImageButton>(R.id.imageHeart)
