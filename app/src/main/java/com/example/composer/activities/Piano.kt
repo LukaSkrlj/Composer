@@ -92,7 +92,7 @@ class Piano : AppCompatActivity() {
             finish()
         }
 
-        findViewById<ImageButton>(R.id.playButton).setOnClickListener {
+        findViewById<ImageButton>(R.id.playButtonPiano).setOnClickListener {
             playSymphony(!isPlaying)
         }
 
@@ -185,7 +185,7 @@ class Piano : AppCompatActivity() {
 
         slidingPaneLayout.addPanelSlideListener(panelListener)
 
-        findViewById<Button>(R.id.addNote).setOnClickListener {
+        findViewById<ImageButton>(R.id.addNote).setOnClickListener {
 
             currentNoteDx += horizontalNoteSpacing
         }
@@ -355,12 +355,12 @@ class Piano : AppCompatActivity() {
         }
     }
 
-    private fun playSymphony(playSymphony: Boolean) {
+     fun playSymphony(playSymphony: Boolean) {
         isPlaying = playSymphony
-        val playButton = findViewById<ImageButton>(R.id.playButton)
+        val playButton = findViewById<ImageButton>(R.id.playButtonPiano)
         if (playSymphony) {
             playButton.setImageResource(R.drawable.ic_pause)
-            staff.setIsMusicPlaying(true)
+            staff.setIsMusicPlaying(true, playButton)
         } else {
             playButton.setImageResource(R.drawable.ic_play)
             staff.setIsMusicPlaying(false)
@@ -490,9 +490,13 @@ class Piano : AppCompatActivity() {
                             newMeasure
                         )
                     }
+
                     if (measuresWithNotes.isNotEmpty()) {
                         measuresWithNotes.last().notes.distinctBy { it.dx }
-                            .map { note -> countSum += note.length }
+                            .map { note ->
+                                countSum += note.length
+
+                            }
                         //tu je greska
                         Log.d(
                             "countSum",
@@ -525,7 +529,8 @@ class Piano : AppCompatActivity() {
                         bottom = 82,
                         dx = currentNoteDx,
                         dy = dy,
-                        measureId = measureId
+                        measureId = measureId,
+                        key = newKey
                     )
 
                     noteViewModel.addNote(note)
