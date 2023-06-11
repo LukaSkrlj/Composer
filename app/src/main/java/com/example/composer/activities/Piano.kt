@@ -10,11 +10,7 @@ import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
-import android.widget.Button
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.ProgressBar
-import android.widget.TextView
+import android.widget.*
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
@@ -26,10 +22,6 @@ import com.example.composer.R
 import com.example.composer.models.*
 import com.example.composer.viewmodel.CompositionViewModel
 import com.example.composer.viewmodel.InstrumentViewModel
-import com.example.composer.models.FavoriteModel
-import com.example.composer.models.Measure
-import com.example.composer.models.MeasureWithNotes
-import com.example.composer.models.Note
 import com.example.composer.viewmodel.MeasureViewModel
 import com.example.composer.viewmodel.NoteViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -110,7 +102,6 @@ class Piano : AppCompatActivity() {
 
 
         measureViewModel.measuresWithNotes.observe(this) { measuresWithNotes ->
-            staff.drawNotes(measuresWithNotes)
             this.measuresWithNotes = measuresWithNotes
         }
         noteViewModel.notes.observe(this) { notes ->
@@ -157,7 +148,6 @@ class Piano : AppCompatActivity() {
             playSymphony(!isPlaying)
         }
 
-        val extras = intent.extras
         if (extras != null) {
             findViewById<ProgressBar>(R.id.progressBar_cyclic).visibility =
                 View.VISIBLE
@@ -234,7 +224,7 @@ class Piano : AppCompatActivity() {
                             .toFloat()
                     ).withEndAction {
                         headerCard.visibility = View.GONE
-                    };
+                    }
                 } else if (newState?.name == "COLLAPSED") {
                     headerCard.visibility = View.VISIBLE
                     headerCard.animate().translationY(0F)
@@ -416,7 +406,7 @@ class Piano : AppCompatActivity() {
         }
     }
 
-     fun playSymphony(playSymphony: Boolean) {
+    fun playSymphony(playSymphony: Boolean) {
         isPlaying = playSymphony
         val playButton = findViewById<ImageButton>(R.id.playButtonPiano)
         if (playSymphony) {
