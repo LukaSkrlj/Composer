@@ -10,7 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.res.ResourcesCompat
 import com.example.composer.R
-import com.example.composer.models.MeasureWithNotes
+import com.example.composer.models.InstrumentWithMeasures
 import com.example.composer.models.Note
 
 
@@ -91,6 +91,7 @@ class Staff @JvmOverloads constructor(
     private val linesCount = 5
     private val lineThickness = 2f
     private val lastNoteMeasureSpacing = 150f
+    private val defaultInstrumentSpacing = 300f
 
     private var barLine =
         arrayOf(
@@ -102,71 +103,76 @@ class Staff @JvmOverloads constructor(
 
     private var lines: Array<Array<Float>> = arrayOf()
 
-    private var measuresWithNotes: List<MeasureWithNotes> = listOf()
-    private var notes: List<Note> = emptyList()
+    private var instrumentsWithMeasures: List<InstrumentWithMeasures> = emptyList()
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        var previousMeasureEnd = 0f
-        for (measure in measuresWithNotes) {
 
-            //Measure start position
-            val currentMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
+        var instrumentSpacing = 0f
+        for (instrument in instrumentsWithMeasures) {
+
+            var previousMeasureEnd = 0f
+            for (measure in instrument.measures) {
+
+                //Measure start position
+                val currentMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
 //            measure(currentMeasureEnd.toInt(), 500)
-            this.layoutParams = ViewGroup.LayoutParams(currentMeasureEnd.toInt(), 500)
-            //Bar line
-            canvas.drawLine(
-                barLine[0] + currentMeasureEnd,
-                barLine[1],
-                barLine[2] + currentMeasureEnd,
-                barLine[3],
-                barLinePaint
-            )
-
-            //draw staff
-            var lastLine: Array<Float> =
-                arrayOf(
-                    previousMeasureEnd,
-                    lineThickness / 2,
-                    currentMeasureEnd,
-                    lineThickness / 2
+                this.layoutParams = ViewGroup.LayoutParams(currentMeasureEnd.toInt(), 500)
+                //Bar line
+                canvas.drawLine(
+                    barLine[0] + currentMeasureEnd,
+                    barLine[1],
+                    barLine[2] + currentMeasureEnd,
+                    barLine[3],
+                    barLinePaint
                 )
 
-            for (i in 1..linesCount) {
-                lines += lastLine
-                lastLine =
-                    lastLine.mapIndexed { index, value -> if (index % 2 == 1) value + lineSpacing else value }
-                        .toTypedArray()
-            }
+                //draw staff
+                var lastLine: Array<Float> =
+                    arrayOf(
+                        previousMeasureEnd,
+                        lineThickness / 2 + instrumentSpacing,
+                        currentMeasureEnd,
+                        lineThickness / 2 + instrumentSpacing
+                    )
 
-            barLinePaint.strokeWidth = lineThickness
-            barLinePaint.isAntiAlias = true
-            barLinePaint.isFilterBitmap = true
-            canvas.drawLines(lines.flatten().toFloatArray(), barLinePaint)
+                for (i in 1..linesCount) {
+                    lines += lastLine
+                    lastLine =
+                        lastLine.mapIndexed { index, value -> if (index % 2 == 1) value + lineSpacing else value }
+                            .toTypedArray()
+                }
 
-            Log.d("notes", measure.notes.toString())
+                barLinePaint.strokeWidth = lineThickness
+                barLinePaint.isAntiAlias = true
+                barLinePaint.isFilterBitmap = true
+                canvas.drawLines(lines.flatten().toFloatArray(), barLinePaint)
 
-            drawTimeSignature(
-                canvas,
-                measure.measure.timeSignatureTop,
-                measure.measure.timeSignatureBottom
-            )
-            val startingOffset = 50f
-            for (note in measure.notes) {
-                val d = resources.getDrawable(
-                    R.drawable.quarter_note,
-                    null
+                Log.d("notes", measure.notes.toString())
+
+                drawTimeSignature(
+                    canvas,
+                    measure.measure.timeSignatureTop,
+                    measure.measure.timeSignatureBottom,
+                    dy = instrumentSpacing
                 )
-                d.setBounds(note.left, note.top, note.right, note.bottom)
-                canvas.translate(note.dx + startingOffset, note.dy)
-                d.draw(canvas)
-                canvas.translate(-note.dx - startingOffset, -note.dy)
-            }
+                val startingOffset = 50f
+                for (note in measure.notes) {
+                    val d = resources.getDrawable(
+                        R.drawable.quarter_note,
+                        null
+                    )
+                    d.setBounds(note.left, note.top, note.right, note.bottom)
+                    canvas.translate(note.dx + startingOffset, note.dy)
+                    d.draw(canvas)
+                    canvas.translate(-note.dx - startingOffset, -note.dy)
+                }
 
-            previousMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
+                previousMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
+            }
+            this.drawEnd(canvas, previousMeasureEnd)
+            instrumentSpacing += defaultInstrumentSpacing
         }
-
-        this.drawEnd(canvas, previousMeasureEnd)
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -175,9 +181,9 @@ class Staff @JvmOverloads constructor(
     }
 
 
-    fun drawNotes(measuresList: List<MeasureWithNotes>) {
-        measuresWithNotes = measuresList
-        Log.d("AAAAAAAAAAAAAAAAAAAAAAAAA", measuresList.joinToString(" "))
+    fun drawNotes(instruments: List<InstrumentWithMeasures>) {
+        instrumentsWithMeasures = instruments
+        Log.d("AAAAAAAAAAAAAAAAAAAAAAAAA", instrumentsWithMeasures.joinToString(" "))
         invalidate()
     }
 
@@ -411,8 +417,14 @@ class Staff @JvmOverloads constructor(
         )
     }
 
-    fun drawTimeSignature(canvas: Canvas, upperNumber: Int, lowerNumber: Int, dx: Float = 0f) {
-        val upperBound = lines.last().last().toInt() / 2
+    fun drawTimeSignature(
+        canvas: Canvas,
+        upperNumber: Int,
+        lowerNumber: Int,
+        dx: Float = 0f,
+        dy: Float = 0f
+    ) {
+        val upperBound = (lines.last().last() / 2 + dy).toInt()
         var resourceId = resources.getIdentifier(
             "time_$upperNumber", "drawable",
             context.packageName

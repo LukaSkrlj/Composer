@@ -3,11 +3,11 @@ package com.example.composer.models
 import androidx.room.Embedded
 import androidx.room.Relation
 
-data class CompositionWithMeasures(
+data class CompositionWithInstruments(
     @Embedded val composition: Composition,
     @Relation(
         parentColumn = "id",
-        entityColumn = "compositionId"
+        entityColumn = "composition_id"
     )
-    val measures: List<Measure>
+    val instruments: List<Instrument> = emptyList()
 )

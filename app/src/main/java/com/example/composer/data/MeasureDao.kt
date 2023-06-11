@@ -23,8 +23,9 @@ interface MeasureDao {
     )
     fun loadMeasureMap(): Map<Measure, List<Note>>
 
+    @Transaction
     @Query("SELECT * FROM Measure")
-    fun test(): LiveData<List<MeasureWithNotes>>
+    fun getMeasuresWithNotes(): LiveData<List<MeasureWithNotes>>
 
     @Query("DELETE FROM Measure")
     fun deleteMeasures(): Void

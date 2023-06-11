@@ -2,19 +2,15 @@ package com.example.composer.adapters
 
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.content.ContextCompat
-import androidx.fragment.app.FragmentActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.example.composer.R
-import com.example.composer.activities.MainActivity
-import com.example.composer.activities.SymphonyActivity
+import com.example.composer.activities.Piano
 import com.example.composer.models.MusicModel
 
 class SymphoniesAdapter(
@@ -35,9 +31,9 @@ class SymphoniesAdapter(
         holder.composerName?.text = symphoniesList[position].symphonyComposer
         holder.symphonyImage.setImageResource(R.drawable.music_placeholder)
 
-        val minutes = (symphoniesList[position].symphonyDurationSeconds?.rem(3600))?.div(60);
-        val seconds = symphoniesList[position].symphonyDurationSeconds?.rem(60);
-        val timeString = String.format("%02d:%02d", minutes, seconds);
+        val minutes = (symphoniesList[position].symphonyDurationSeconds?.rem(3600))?.div(60)
+        val seconds = symphoniesList[position].symphonyDurationSeconds?.rem(60)
+        val timeString = String.format("%02d:%02d", minutes, seconds)
 
         holder.duration?.text = timeString
 
@@ -45,9 +41,9 @@ class SymphoniesAdapter(
             context.startActivity(
                 Intent(
                     context,
-                    SymphonyActivity::class.java
+                    Piano::class.java
                 ).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    .putExtra("symphonyID", symphoniesList[position].id)
+                    .putExtra("compositionId", symphoniesList[position].id)
             )
         }
 
