@@ -12,5 +12,6 @@ data class Note(
     var pitch: String = REST,
     var left: Int = 0, var top: Int = 0, var right: Int = 0, var bottom: Int = 0,
     var dx: Float = 0f, var dy: Float = 0f, var resourceId: String = "",
-    var length: Float = 0.25f
+    var length: Float = 0.25f,
+    var key: String = ""
 )
