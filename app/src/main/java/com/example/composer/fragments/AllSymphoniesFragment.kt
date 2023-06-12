@@ -56,9 +56,9 @@ class AllSymphoniesFragment : Fragment() {
 
         docRefAll.get(Source.SERVER)
             .addOnSuccessListener { collection ->
-                (view?.findViewById(R.id.swipeToRefresh) as SwipeRefreshLayout).isRefreshing = false
+                view?.findViewById<SwipeRefreshLayout>(R.id.swipeToRefresh)?.isRefreshing = false
                 if (collection != null) {
-                    requireView().findViewById<ProgressBar>(R.id.progressBar_cyclic).visibility =
+                    view?.findViewById<ProgressBar>(R.id.progressBar_cyclic)?.visibility =
                         View.GONE
                     for (document in collection.documents) {
                         musicListAll.add(
@@ -162,7 +162,8 @@ class AllSymphoniesFragment : Fragment() {
                         SymphoniesAdapter(
                             it,
                             musicListMostLiked,
-                            R.layout.music_column
+                            R.layout.music_column,
+                            false
                         )
                     }
 

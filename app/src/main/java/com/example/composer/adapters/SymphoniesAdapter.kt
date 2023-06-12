@@ -49,7 +49,9 @@ class SymphoniesAdapter(
                     context,
                     Piano::class.java
                 ).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    .putExtra("compositionId", symphoniesList[position].id)
+                    .putExtra("symphonyID", symphoniesList[position].id)
+                    .putExtra("isSymphonyMine", isSymphonyMine)
+
             )
         }
 
