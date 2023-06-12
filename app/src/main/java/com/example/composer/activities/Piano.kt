@@ -11,12 +11,6 @@ import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import android.widget.*
-import android.widget.Button
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.ProgressBar
-import android.widget.TextView
-import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
@@ -174,53 +168,52 @@ class Piano : AppCompatActivity() {
         val currentUser = GoogleSignIn.getLastSignedInAccount(this)
         val measureWithNotesCopyMutable: MutableList<InstrumentWithMeasures> = mutableListOf()
 
-        document?.collection("sheet")?.document("music")?.get()
-            ?.addOnCompleteListener { music ->
-
-                if (music.result.exists()) {
-                    val measures =
-                        music.result.data?.get("measures") as ArrayList<HashMap<Any, Any>>
-
-                    for ((measureIndex, element) in measures.withIndex()) {
-
-                        val measure = element["measure"] as HashMap<*, *>
-                        val notes = element["notes"] as ArrayList<HashMap<Any, Any>>
-                        var newMeasureWithNotes: MeasureWithNotes = MeasureWithNotes()
-                        val newNotesList: MutableList<Note> = mutableListOf()
-                        val newMeasure = Measure(
-                            id = (measure["id"] as Long).toInt(),
-                            timeSignatureTop = (measure["timeSignatureTop"] as Long).toInt(),
-                            timeSignatureBottom = (measure["timeSignatureBottom"] as Long).toInt(),
-                            keySignature = measure["keySignature"] as String,
-                            compositionId = (measure["compositionId"] as Long).toInt(),
-                            clef = measure["clef"] as String,
-                            instrumentId = 0
-                        )
-
-                        newMeasureWithNotes.measure = newMeasure
-
-                        for ((noteIndex, note) in notes.withIndex()) {
-                            val newNote = Note(
-                                right = (note["right"] as Long).toInt(),
-                                bottom = (note["bottom"] as Long).toInt(),
-                                dx = (note["dx"] as Double).toFloat(),
-                                dy = (note["dy"] as Double).toFloat(),
-                                measureId = (note["measureId"] as Long).toInt(),
-                                key = note["key"] as String
-                            )
-                            newNotesList.add(noteIndex, newNote)
-                        }
-                        newMeasureWithNotes.notes = newNotesList.toList()
-//                        measureWithNotesCopyMutable.add(measureIndex, newMeasureWithNotes)
-
-                    }
-
-                    staff.drawNotes(measureWithNotesCopyMutable)
-                    progressBar.visibility = View.GONE
-                } else {
-                    progressBar.visibility = View.GONE
-                }
-            }
+//        document?.collection("sheet")?.document("music")?.get()
+//            ?.addOnCompleteListener { music ->
+//
+//                if (music.result.exists()) {
+//                    val measures =
+//                        music.result.data?.get("measures") as ArrayList<HashMap<Any, Any>>
+//
+//                    for ((measureIndex, element) in measures.withIndex()) {
+//
+//                        val measure = element["measure"] as HashMap<*, *>
+//                        val notes = element["notes"] as ArrayList<HashMap<Any, Any>>
+//                        var newMeasureWithNotes: MeasureWithNotes = MeasureWithNotes()
+//                        val newNotesList: MutableList<Note> = mutableListOf()
+//                        val newMeasure = Measure(
+//                            id = (measure["id"] as Long).toInt(),
+//                            timeSignatureTop = (measure["timeSignatureTop"] as Long).toInt(),
+//                            timeSignatureBottom = (measure["timeSignatureBottom"] as Long).toInt(),
+//                            keySignature = measure["keySignature"] as String,
+//                            clef = measure["clef"] as String,
+//                            instrumentId = 0
+//                        )
+//
+//                        newMeasureWithNotes.measure = newMeasure
+//
+//                        for ((noteIndex, note) in notes.withIndex()) {
+//                            val newNote = Note(
+//                                right = (note["right"] as Long).toInt(),
+//                                bottom = (note["bottom"] as Long).toInt(),
+//                                dx = (note["dx"] as Double).toFloat(),
+//                                dy = (note["dy"] as Double).toFloat(),
+//                                measureId = (note["measureId"] as Long).toInt(),
+//                                key = note["key"] as String
+//                            )
+//                            newNotesList.add(noteIndex, newNote)
+//                        }
+//                        newMeasureWithNotes.notes = newNotesList.toList()
+////                        measureWithNotesCopyMutable.add(measureIndex, newMeasureWithNotes)
+//
+//                    }
+//
+//                    staff.drawNotes(measureWithNotesCopyMutable)
+//                    progressBar.visibility = View.GONE
+//                } else {
+//                    progressBar.visibility = View.GONE
+//                }
+//            }
         document?.get()?.addOnSuccessListener { symphony ->
             findViewById<TextView>(R.id.symphonyName).text =
                 symphony.get("symphonyName") as CharSequence?
@@ -237,7 +230,6 @@ class Piano : AppCompatActivity() {
                         val measureHashMap: HashMap<String, Any> = HashMap()
                         val notesAndMeasureHashMap: HashMap<String, Any> = HashMap()
                         measureHashMap["clef"] = measure.measure.clef
-                        measureHashMap["compositionId"] = measure.measure.compositionId
                         measureHashMap["id"] = measure.measure.id
                         measureHashMap["keySignature"] = measure.measure.keySignature
                         measureHashMap["timeSignatureTop"] = measure.measure.timeSignatureTop
@@ -659,8 +651,17 @@ class Piano : AppCompatActivity() {
                             .map { note -> countSum += note.length }
 
                         if (measuresWithNotes.isEmpty()) {
-
-                            addMeasure(0, 4, 4, "c", 0, "treble")
+                            val newMeasure = Measure(
+                                id = 0,
+                                timeSignatureTop = 4,
+                                timeSignatureBottom = 4,
+                                keySignature = "c",
+                                instrumentId = currentInstrumentId,
+                                clef = "treble"
+                            )
+                            measureViewModel.upsertMeasure(
+                                newMeasure
+                            )
                         }
 
                         if (measuresWithNotes.isNotEmpty()) {
@@ -694,21 +695,19 @@ class Piano : AppCompatActivity() {
                                 measureViewModel.upsertMeasure(
                                     newMeasure
                                 )
-
-                                if (df.format(countSum) == df.format(measuresWithNotes.last().measure.timeSignatureTop / measuresWithNotes.last().measure.timeSignatureBottom.toFloat())) {
-                                    measureId = measuresWithNotes.last().measure.id + 1
-
-                                    addMeasure(measureId, 4, 4, "c", 0, "treble")
-
-
-                                }
-
                             }
 
-                            addNote(82, 82, currentNoteDx, dy, measureId, newKey)
+                            val newNote = Note(
+                                right = 82,
+                                bottom = 82,
+                                dx = currentNoteDx,
+                                dy = dy,
+                                measureId = measureId,
+                                key = key
+                            )
 
+                            noteViewModel.addNote(newNote)
                         }
-
                     }
                 }
                 constraintLayout.addView(whitePianoKey)
@@ -776,27 +775,6 @@ class Piano : AppCompatActivity() {
 
         noteViewModel.addNote(newNote)
 
-    }
-
-    private fun addMeasure(
-        id: Int,
-        timeSignatureTop: Int,
-        timeSignatureBottom: Int,
-        keySignature: String,
-        compositionId: Int,
-        clef: String
-    ) {
-        val newMeasure = Measure(
-            id = id,
-            timeSignatureTop = timeSignatureTop,
-            timeSignatureBottom = timeSignatureBottom,
-            keySignature = keySignature,
-            compositionId = compositionId,
-            clef = clef
-        )
-        measureViewModel.upsertMeasure(
-            newMeasure
-        )
     }
 
     private fun addLikeBackground(colorBackground: Boolean) {

@@ -11,6 +11,5 @@ data class Measure(
     var timeSignatureBottom: Int = 4,
     @ColumnInfo(name = "instrument_id") var instrumentId: Int = 0,
     var keySignature: String = "",
-    var compositionId: Int = 0,
     var clef: String = "treble"
 )

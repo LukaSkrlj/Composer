@@ -2,20 +2,13 @@ package com.example.composer.activities
 
 import android.content.Intent
 import android.os.Bundle
-import android.text.TextUtils
-import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
 import android.widget.ImageView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.Navigation
-import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.example.composer.R
 import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.tasks.Task
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.messaging.FirebaseMessaging
 
@@ -61,7 +54,7 @@ class MainActivity : AppCompatActivity() {
 
 
         findViewById<ImageView>(R.id.addButton).setOnClickListener {
-            val intent = Intent(this, NewCompositionActivity::class.java)
+            val intent = Intent(this, Piano::class.java)
             startActivity(intent)
         }
 
