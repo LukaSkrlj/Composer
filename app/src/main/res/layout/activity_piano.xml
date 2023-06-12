@@ -18,7 +18,7 @@
         android:indeterminateTint="@color/login_background_color"
         android:indeterminateTintMode="src_atop"
         android:padding="160dp"
-        android:visibility="gone" />
+        android:visibility="visible" />
 
     <androidx.cardview.widget.CardView
         android:id="@+id/settings_panel"

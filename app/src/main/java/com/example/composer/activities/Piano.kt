@@ -83,7 +83,7 @@ class Piano : AppCompatActivity() {
         compositionViewModel = ViewModelProvider(this)[CompositionViewModel::class.java]
         compositionViewModel.compositions.observe(this) { compositions ->
             if (compositions.isEmpty()) {
-                compositionViewModel.upsertComposition(Composition(name = "test"))
+                compositionViewModel.upsertComposition(Composition(name = "test", author = "compostionName"))
             }
         }
 
@@ -93,7 +93,7 @@ class Piano : AppCompatActivity() {
         if (extras != null) {
             compositionId = extras.getInt("compositionId")
         } else {
-            compositionViewModel.upsertComposition(Composition(name = "test"))
+            compositionViewModel.upsertComposition(Composition(name = "test", author = "compostionName"))
             compositionViewModel.lastComposition.observe(this) { composition ->
                 compositionId = composition.id
             }
