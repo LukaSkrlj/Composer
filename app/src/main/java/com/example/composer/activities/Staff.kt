@@ -21,8 +21,11 @@ import androidx.core.content.res.ResourcesCompat
 import com.example.composer.R
 import com.example.composer.models.MeasureWithNotes
 import com.example.composer.models.Note
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -47,7 +50,7 @@ class Staff @JvmOverloads constructor(
     private val barLinePaint = Paint()
     private val playingLinePaint = Paint()
     private var xPositionPlayingLine = 0f
-
+    private var globalScope: Job? = null
     private val soundPool: SoundPool = SoundPool.Builder().setMaxStreams(100).build()
     val notesHmap = LinkedHashMap<String, Note>()
     private val linesCount = 5
@@ -87,6 +90,7 @@ class Staff @JvmOverloads constructor(
                 barLinePaint
             )
 
+
             //draw staff
             var lastLine: Array<Float> =
                 arrayOf(
@@ -120,6 +124,7 @@ class Staff @JvmOverloads constructor(
                     R.drawable.quarter_note,
                     null
                 )
+
                 d.setBounds(note.left, note.top, note.right, note.bottom)
                 canvas.translate(note.dx + startingOffset, note.dy)
                 d.draw(canvas)
@@ -129,9 +134,9 @@ class Staff @JvmOverloads constructor(
             previousMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
         }
 
-        if (isMusicPlaying) {
-//            this.drawPlayingLine(canvas, xPositionPlayingLine)
-        }
+//        if (isMusicPlaying) {
+////            this.drawPlayingLine(canvas, xPositionPlayingLine)
+//        }
 
         this.drawEnd(canvas, previousMeasureEnd)
 
@@ -153,6 +158,8 @@ class Staff @JvmOverloads constructor(
         if (isMusicPlaying) {
             playMusic(measuresWithNotes, playButton)
 
+        } else {
+            globalScope?.cancel()
         }
 
     }
@@ -428,7 +435,7 @@ class Staff @JvmOverloads constructor(
 
     private fun playMusic(measuresList: List<MeasureWithNotes>, playButton: ImageButton?) {
         val measureListCopy = measuresList.toMutableList()
-        GlobalScope.launch(Dispatchers.IO) {
+        globalScope = GlobalScope.launch(Dispatchers.IO) {
             for (measure in measureListCopy) {
                 for ((noteIndex, note) in measure.notes.withIndex()) {
                     val noteLength =
@@ -477,11 +484,15 @@ class Staff @JvmOverloads constructor(
                 }
             }
             playButton?.setImageResource(R.drawable.ic_play)
-
             isMusicPlaying = false
             return@launch
         }
 
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        globalScope?.cancel()
     }
 
     private suspend fun loadSound(soundPool: SoundPool, soundId: Int): Int {

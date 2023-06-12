@@ -13,11 +13,122 @@
         android:id="@+id/progressBar_cyclic"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:elevation="10dp"
         android:indeterminate="true"
         android:indeterminateTint="@color/login_background_color"
         android:indeterminateTintMode="src_atop"
         android:padding="160dp"
-        android:visibility="gone" />
+        android:visibility="visible" />
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/settings_panel"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="10dp">
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/header"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+
+                    <ImageButton
+                        android:id="@+id/close_button"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:background="@color/white"
+                        android:clickable="true"
+                        android:contentDescription="@string/heart"
+                        android:focusable="true"
+                        android:foreground="?android:attr/selectableItemBackground"
+                        android:scaleType="fitXY"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:srcCompat="@drawable/ic_close" />
+
+                    <TextView
+                        android:id="@+id/textView8"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Settings"
+                        android:fontFamily="@font/jost_bold"
+                        android:textColor="@color/black"
+                        android:textSize="19sp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:orientation="vertical"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/header">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginBottom="20dp"
+                    android:fontFamily="@font/jost_bold"
+                    android:text="Change your symphony"
+                    android:textColor="@color/black"
+                    android:textSize="16sp" />
+
+                <EditText
+                    android:id="@+id/editTextText"
+                    android:layout_width="200dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dp"
+                    android:drawableRight="@drawable/ic_edit"
+                    android:ems="10"
+                    android:inputType="text"
+                    android:text="@string/symphony_name"
+                    app:layout_constraintBottom_toTopOf="@+id/store_to_cloud"
+                    app:layout_constraintStart_toStartOf="parent" />
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/store_to_cloud"
+                    android:layout_width="200dp"
+                    android:layout_height="50dp"
+                    android:background="@drawable/button_pill"
+                    android:drawableStart="@drawable/ic_cloud_upload"
+                    android:gravity="center"
+                    android:paddingLeft="20dp"
+                    android:stateListAnimator="@null"
+                    android:text="Save Changes"
+                    android:textColor="@color/black"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent" />
+
+
+            </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+    </androidx.cardview.widget.CardView>
+
 
     <com.sothree.slidinguppanel.SlidingUpPanelLayout
         android:id="@+id/sliding_layout"
@@ -49,6 +160,7 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
+
 
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardViewHeader"
@@ -108,9 +220,8 @@
                             android:contentDescription="@string/heart"
                             android:focusable="true"
                             android:foreground="?android:attr/selectableItemBackground"
-                            android:padding="10dp"
+                            android:padding="12dp"
                             android:scaleType="centerCrop"
-                            android:visibility="gone"
                             app:srcCompat="@drawable/ic_favorite_empty" />
 
                         <ImageButton
@@ -121,9 +232,22 @@
                             android:contentDescription="@string/play"
                             android:focusable="true"
                             android:foreground="?android:attr/selectableItemBackground"
-                            android:padding="10dp"
+                            android:padding="12dp"
                             android:scaleType="centerCrop"
                             android:src="@drawable/ic_play" />
+
+                        <ImageButton
+                            android:id="@+id/settings_button"
+                            android:layout_width="55dp"
+                            android:layout_height="match_parent"
+                            android:background="@color/white"
+                            android:contentDescription="@string/play"
+                            android:focusable="true"
+                            android:foreground="?android:attr/selectableItemBackground"
+                            android:padding="12dp"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/ic_settings" />
+
 
                     </LinearLayout>
 
@@ -133,6 +257,8 @@
 
 
             <HorizontalScrollView
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="20dp"
                 android:id="@+id/viewing"
                 android:layout_width="wrap_content"
                 android:layout_height="300dp"
@@ -161,7 +287,7 @@
 
 
         <RelativeLayout
-            android:id="@+id/pianoContainer"
+            android:id="@+id/piano_container"
             android:layout_width="wrap_content"
             android:layout_height="280dp"
             android:contentDescription="Piano content"
@@ -216,4 +342,6 @@
             </HorizontalScrollView>
         </RelativeLayout>
     </com.sothree.slidinguppanel.SlidingUpPanelLayout>
+
+
 </LinearLayout>

@@ -61,7 +61,7 @@ class MainActivity : AppCompatActivity() {
 
 
         findViewById<ImageView>(R.id.addButton).setOnClickListener {
-            val intent = Intent(this, Piano::class.java)
+            val intent = Intent(this, NewCompositionActivity::class.java)
             startActivity(intent)
         }
 

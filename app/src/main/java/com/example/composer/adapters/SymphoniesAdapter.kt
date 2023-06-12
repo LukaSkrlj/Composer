@@ -46,9 +46,12 @@ class SymphoniesAdapter(
             context.startActivity(
                 Intent(
                     context,
-                    if(isSymphonyMine)  Piano::class.java else SymphonyActivity::class.java
+                  Piano::class.java
                 ).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     .putExtra("symphonyID", symphoniesList[position].id)
+                    .putExtra("isSymphonyMine", isSymphonyMine)
+
+
             )
         }
 

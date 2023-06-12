@@ -21,6 +21,7 @@
         <activity android:name=".activities.MainActivity" />
         <activity android:name=".activities.SearchActivity" />
         <activity android:name=".activities.LoginActivity" />
+        <activity android:name=".activities.NewCompositionActivity" />
         <activity
             android:name=".activities.SymphonyActivity"
             android:screenOrientation="landscape" />
