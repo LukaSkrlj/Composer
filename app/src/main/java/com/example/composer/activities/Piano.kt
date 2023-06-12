@@ -1,6 +1,8 @@
 package com.example.composer.activities
 
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
 import android.content.pm.ActivityInfo
 import android.graphics.Color
 import android.media.SoundPool
@@ -14,9 +16,12 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.ProgressBar
+import android.widget.RelativeLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.AppCompatButton
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
@@ -34,6 +39,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelState
 import java.text.DecimalFormat
+import kotlin.math.log
 import kotlin.math.roundToInt
 
 
@@ -76,6 +82,10 @@ class Piano : AppCompatActivity() {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         val headerCard = findViewById<CardView>(R.id.cardViewHeader)
         val favoritesIcon = findViewById<ImageButton>(R.id.imageHeart)
+        val saveToCloudButton = findViewById<AppCompatButton>(R.id.store_to_cloud)
+        val progressBar = findViewById<ProgressBar>(R.id.progressBar_cyclic)
+        val settingsButton = findViewById<ImageButton>(R.id.settings_button)
+        val settingsPanel = findViewById<CardView>(R.id.settings_panel)
         staff = findViewById(R.id.staff)
         noteViewModel = ViewModelProvider(this)[NoteViewModel::class.java]
         measureViewModel = ViewModelProvider(this)[MeasureViewModel::class.java]
@@ -87,6 +97,13 @@ class Piano : AppCompatActivity() {
             Log.d("piano notes", notes.toString())
         }
 
+        settingsButton.setOnClickListener {
+            settingsPanel.visibility = View.VISIBLE
+        }
+
+        findViewById<ImageButton>(R.id.close_button).setOnClickListener {
+            settingsPanel.visibility = View.GONE
+        }
 
         findViewById<ImageView>(R.id.back).setOnClickListener {
             finish()
@@ -97,20 +114,139 @@ class Piano : AppCompatActivity() {
         }
 
         val extras = intent.extras
-        if (extras != null) {
-            findViewById<ProgressBar>(R.id.progressBar_cyclic).visibility =
-                View.VISIBLE
+
+        //symphony exists and its not users
+        if (extras?.getBoolean("isSymphonyMine") == false && extras.getString("symphonyID")
+                ?.isNotEmpty() == true
+        ) {
+            findViewById<RelativeLayout>(R.id.piano_container).visibility = View.GONE
+            saveToCloudButton.visibility = View.GONE
+            settingsButton.visibility = View.GONE
+        }
+
+
+        //when there is no symphony
+        if (extras == null) {
+            progressBar.visibility =
+                View.GONE
+
+            favoritesIcon.visibility = View.GONE
+            saveToCloudButton.visibility = View.GONE
+        }
+
+        //when symphony exists
+        if (extras?.getString("symphonyID")
+                ?.isNotEmpty() == true && extras.getBoolean("isSymphonyMine") == false
+        ) {
             val db = FirebaseFirestore.getInstance()
             val symphonyID = extras.getString("symphonyID")
 
             val document = symphonyID?.let { db.collection("symphonies").document(it) }
-
             val currentUser = GoogleSignIn.getLastSignedInAccount(this)
-            if (currentUser != null) {
-                favoritesIcon.visibility = View.VISIBLE
-                document?.get()?.addOnSuccessListener { symphony ->
-                    findViewById<TextView>(R.id.symphonyName).text =
-                        symphony.get("symphonyName") as CharSequence?
+            val measureWithNotesCopyMutable: MutableList<MeasureWithNotes> = mutableListOf()
+
+            document?.collection("sheet")?.document("music")?.get()
+                ?.addOnCompleteListener { music ->
+
+                    if (music.result.exists()) {
+                        val measures =
+                            music.result.data?.get("measures") as ArrayList<HashMap<Any, Any>>
+
+                        for ((measureIndex, element) in measures.withIndex()) {
+
+                            val measure = element["measure"] as HashMap<*, *>
+                            val notes = element["notes"] as ArrayList<HashMap<Any, Any>>
+                            var newMeasureWithNotes: MeasureWithNotes = MeasureWithNotes()
+                            val newNotesList: MutableList<Note> = mutableListOf()
+                            val newMeasure = Measure(
+                                id = (measure["id"] as Long).toInt(),
+                                timeSignatureTop = (measure["timeSignatureTop"] as Long).toInt(),
+                                timeSignatureBottom = (measure["timeSignatureBottom"] as Long).toInt(),
+                                keySignature = measure["keySignature"] as String,
+                                compositionId = (measure["compositionId"] as Long).toInt(),
+                                clef = measure["clef"] as String
+                            )
+
+                            newMeasureWithNotes.measure = newMeasure
+
+                            for ((noteIndex, note) in notes.withIndex()) {
+                                val newNote = Note(
+                                    right = (note["right"] as Long).toInt(),
+                                    bottom = (note["bottom"] as Long).toInt(),
+                                    dx = (note["dx"] as Double).toFloat(),
+                                    dy = (note["dy"] as Double).toFloat(),
+                                    measureId = (note["measureId"] as Long).toInt(),
+                                    key = note["key"] as String
+                                )
+                                newNotesList.add(noteIndex, newNote)
+                            }
+                            newMeasureWithNotes.notes = newNotesList.toList()
+                            measureWithNotesCopyMutable.add(measureIndex, newMeasureWithNotes)
+
+                        }
+
+                        staff.drawNotes(measureWithNotesCopyMutable)
+                        progressBar.visibility = View.GONE
+                    } else {
+                        progressBar.visibility = View.GONE
+                    }
+                }
+            document?.get()?.addOnSuccessListener { symphony ->
+                findViewById<TextView>(R.id.symphonyName).text =
+                    symphony.get("symphonyName") as CharSequence?
+
+                if (currentUser != null) {
+
+
+                    val newMeasuresWithNotesFirebaseAccessible: ArrayList<Any> =
+                        ArrayList()
+                    saveToCloudButton.setOnClickListener {
+
+                        for ((indexMeasure, measure) in measuresWithNotes.withIndex()) {
+                            val notes: ArrayList<HashMap<String, Any>> = ArrayList()
+                            val measureHashMap: HashMap<String, Any> = HashMap()
+                            val notesAndMeasureHashMap: HashMap<String, Any> = HashMap()
+                            measureHashMap["clef"] = measure.measure.clef
+                            measureHashMap["compositionId"] = measure.measure.compositionId
+                            measureHashMap["id"] = measure.measure.id
+                            measureHashMap["keySignature"] = measure.measure.keySignature
+                            measureHashMap["timeSignatureTop"] = measure.measure.timeSignatureTop
+                            measureHashMap["timeSignatureBottom"] =
+                                measure.measure.timeSignatureBottom
+
+                            notesAndMeasureHashMap["measure"] = measureHashMap
+
+                            for ((indexNote, note) in measure.notes.withIndex()) {
+                                val noteHashMap: HashMap<String, Any> = HashMap()
+                                noteHashMap["right"] = note.right
+                                noteHashMap["bottom"] = note.bottom
+                                noteHashMap["dx"] = note.dx
+                                noteHashMap["dy"] = note.dy
+                                noteHashMap["measureId"] = note.measureId
+                                noteHashMap["key"] = note.key
+                                notes.add(indexNote, noteHashMap)
+                            }
+                            notesAndMeasureHashMap["notes"] = notes
+                            newMeasuresWithNotesFirebaseAccessible.add(
+                                indexMeasure,
+                                notesAndMeasureHashMap
+                            )
+                        }
+
+
+
+                        db.collection("symphonies").document(symphonyID).collection("sheet")
+                            .document("music")
+                            .set(mapOf("measures" to newMeasuresWithNotesFirebaseAccessible))
+                            .addOnSuccessListener {
+                                Toast.makeText(
+                                    this,
+                                    "Symphony saved successfully",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+
+                    }
 
                     currentUser.id?.let {
                         checkIfSymphonyIsLiked(
@@ -125,7 +261,8 @@ class Piano : AppCompatActivity() {
                             addLikeBackground(false)
                             db.collectionGroup("favorites")
                                 .whereEqualTo("userID", currentUser.id.toString())
-                                .whereEqualTo("symphonyID", symphonyID).get().addOnSuccessListener {
+                                .whereEqualTo("symphonyID", symphonyID).get()
+                                .addOnSuccessListener {
                                     it.documents.forEach { document ->
                                         document.reference.delete()
                                     }
@@ -145,13 +282,10 @@ class Piano : AppCompatActivity() {
                             db.collection("favorites").add(data)
                         }
                     }
-
                 }
-            } else {
-                findViewById<ProgressBar>(R.id.progressBar_cyclic).visibility =
-                    View.GONE
-                favoritesIcon.visibility = View.GONE
+
             }
+
         }
 
 
@@ -173,7 +307,7 @@ class Piano : AppCompatActivity() {
                             .toFloat()
                     ).withEndAction {
                         headerCard.visibility = View.GONE
-                    };
+                    }
                 } else if (newState?.name == "COLLAPSED") {
                     headerCard.visibility = View.VISIBLE
                     headerCard.animate().translationY(0F)
@@ -186,7 +320,6 @@ class Piano : AppCompatActivity() {
         slidingPaneLayout.addPanelSlideListener(panelListener)
 
         findViewById<ImageButton>(R.id.addNote).setOnClickListener {
-
             currentNoteDx += horizontalNoteSpacing
         }
         //REMOVE WHEN IN PRODUCTION
@@ -355,9 +488,10 @@ class Piano : AppCompatActivity() {
         }
     }
 
-     fun playSymphony(playSymphony: Boolean) {
+    fun playSymphony(playSymphony: Boolean) {
         isPlaying = playSymphony
         val playButton = findViewById<ImageButton>(R.id.playButtonPiano)
+
         if (playSymphony) {
             playButton.setImageResource(R.drawable.ic_pause)
             staff.setIsMusicPlaying(true, playButton)
@@ -478,17 +612,8 @@ class Piano : AppCompatActivity() {
 
                     val df = DecimalFormat("#.##")
                     if (measuresWithNotes.isEmpty()) {
-                        val newMeasure = Measure(
-                            id = 0,
-                            timeSignatureTop = 4,
-                            timeSignatureBottom = 4,
-                            keySignature = "c",
-                            compositionId = 0,
-                            clef = "treble"
-                        )
-                        measureViewModel.upsertMeasure(
-                            newMeasure
-                        )
+
+                        addMeasure(0, 4, 4, "c", 0, "treble")
                     }
 
                     if (measuresWithNotes.isNotEmpty()) {
@@ -508,32 +633,15 @@ class Piano : AppCompatActivity() {
                         )
                         if (df.format(countSum) == df.format(measuresWithNotes.last().measure.timeSignatureTop / measuresWithNotes.last().measure.timeSignatureBottom.toFloat())) {
                             measureId = measuresWithNotes.last().measure.id + 1
-                            val newMeasure = Measure(
-                                id = measureId,
-                                timeSignatureTop = 4,
-                                timeSignatureBottom = 4,
-                                keySignature = "c",
-                                compositionId = 0,
-                                clef = "treble"
-                            )
-                            measureViewModel.upsertMeasure(
-                                newMeasure
-                            )
+
+                            addMeasure(measureId, 4, 4, "c", 0, "treble")
+
                         }
 
                     }
 
+                    addNote(82, 82, currentNoteDx, dy, measureId, newKey)
 
-                    val note = Note(
-                        right = 82,
-                        bottom = 82,
-                        dx = currentNoteDx,
-                        dy = dy,
-                        measureId = measureId,
-                        key = newKey
-                    )
-
-                    noteViewModel.addNote(note)
                 }
 
                 constraintLayout.addView(whitePianoKey)
@@ -563,6 +671,7 @@ class Piano : AppCompatActivity() {
         }
     }
 
+
     private fun checkIfSymphonyIsLiked(
         db: FirebaseFirestore,
         userID: String,
@@ -572,8 +681,6 @@ class Piano : AppCompatActivity() {
             .whereEqualTo("userID", userID)
             .whereEqualTo("symphonyID", symphonyID).get()
             .addOnCompleteListener {
-                findViewById<ProgressBar>(R.id.progressBar_cyclic).visibility =
-                    View.GONE
                 if (it.result.isEmpty) {
                     addLikeBackground(false)
 
@@ -581,6 +688,48 @@ class Piano : AppCompatActivity() {
                     addLikeBackground(true)
                 }
             }
+    }
+
+    private fun addNote(
+        right: Int,
+        bottom: Int,
+        dx: Float,
+        dy: Float,
+        measureId: Int,
+        key: String
+    ) {
+        val newNote = Note(
+            right = right,
+            bottom = bottom,
+            dx = dx,
+            dy = dy,
+            measureId = measureId,
+            key = key
+        )
+
+        noteViewModel.addNote(newNote)
+
+    }
+
+    private fun addMeasure(
+        id: Int,
+        timeSignatureTop: Int,
+        timeSignatureBottom: Int,
+        keySignature: String,
+        compositionId: Int,
+        clef: String
+    ) {
+        val newMeasure = Measure(
+            id = id,
+            timeSignatureTop = timeSignatureTop,
+            timeSignatureBottom = timeSignatureBottom,
+            keySignature = keySignature,
+            compositionId = compositionId,
+            clef = clef
+        )
+        measureViewModel.upsertMeasure(
+            newMeasure
+        )
     }
 
     private fun addLikeBackground(colorBackground: Boolean) {
