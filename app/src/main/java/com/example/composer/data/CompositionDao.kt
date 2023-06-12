@@ -3,7 +3,7 @@ package com.example.composer.data
 import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.example.composer.models.Composition
-import com.example.composer.models.CompositionWithMeasures
+import com.example.composer.models.CompositionWithInstruments
 
 @Dao
 interface CompositionDao {
@@ -15,8 +15,11 @@ interface CompositionDao {
 
     @Transaction
     @Query("SELECT * FROM Composition WHERE id = :id")
-    fun getCompositionWIthMeasures(id: Int): List<CompositionWithMeasures>
+    fun getCompositionWithInstruments(id: Int): LiveData<CompositionWithInstruments>
 
     @Query("SELECT * FROM Composition")
     fun getCompositions(): LiveData<List<Composition>>
+
+    @Query("SELECT * FROM Composition ORDER BY id DESC LIMIT 1")
+    fun getLastComposition(): LiveData<Composition>
 }

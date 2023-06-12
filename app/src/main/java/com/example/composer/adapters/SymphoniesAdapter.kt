@@ -13,8 +13,8 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.example.composer.R
-import com.example.composer.activities.MainActivity
 import com.example.composer.activities.Piano
+import com.example.composer.activities.MainActivity
 import com.example.composer.activities.SymphonyActivity
 import com.example.composer.models.MusicModel
 
@@ -37,20 +37,20 @@ class SymphoniesAdapter(
         holder.composerName?.text = symphoniesList[position].symphonyComposer
         holder.symphonyImage.setImageResource(R.drawable.music_placeholder)
 
-        val minutes = (symphoniesList[position].symphonyDurationSeconds?.rem(3600))?.div(60);
-        val seconds = symphoniesList[position].symphonyDurationSeconds?.rem(60);
-        val timeString = String.format("%02d:%02d", minutes, seconds);
+        val minutes = (symphoniesList[position].symphonyDurationSeconds?.rem(3600))?.div(60)
+        val seconds = symphoniesList[position].symphonyDurationSeconds?.rem(60)
+        val timeString = String.format("%02d:%02d", minutes, seconds)
 
         holder.duration?.text = timeString
+
         holder.cardView?.setOnClickListener {
             context.startActivity(
                 Intent(
                     context,
-                  Piano::class.java
+                    Piano::class.java
                 ).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     .putExtra("symphonyID", symphoniesList[position].id)
                     .putExtra("isSymphonyMine", isSymphonyMine)
-
 
             )
         }

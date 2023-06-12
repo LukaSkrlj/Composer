@@ -7,7 +7,7 @@ import com.example.composer.models.MeasureWithNotes
 
 class MeasureRepository(private val measureDao: MeasureDao) {
     val measures: LiveData<List<Measure>> = measureDao.getMeasures()
-    val measuresWithNotes: LiveData<List<MeasureWithNotes>> = measureDao.test()
+    val measuresWithNotes: LiveData<List<MeasureWithNotes>> = measureDao.getMeasuresWithNotes()
 
     suspend fun upsertMeasure(measure: Measure) {
         measureDao.upsertMeasure(measure)

@@ -11,8 +11,8 @@ import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.example.composer.R
-import com.example.composer.models.SearchResult
 import com.example.composer.activities.SymphonyActivity
+import com.example.composer.models.SearchResult
 
 class SearchAdapter(var context: Context, var searchList: List<SearchResult>) :
     RecyclerView.Adapter<SearchAdapter.ViewHolder>() {
@@ -34,7 +34,7 @@ class SearchAdapter(var context: Context, var searchList: List<SearchResult>) :
                     context,
                     SymphonyActivity::class.java
                 ).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    .putExtra("symphonyID", searchList[position].id)
+                    .putExtra("compositionId", searchList[position].id)//convert firebase id to int
             )
         }
     }

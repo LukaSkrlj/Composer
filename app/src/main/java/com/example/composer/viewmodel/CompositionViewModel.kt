@@ -6,23 +6,25 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
 import com.example.composer.data.ComposerDatabase
 import com.example.composer.models.Composition
-import com.example.composer.models.CompositionWithMeasures
+import com.example.composer.models.CompositionWithInstruments
 import com.example.composer.repository.CompositionRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class CompositionViewModel(application: Application) : AndroidViewModel(application) {
     val compositions: LiveData<List<Composition>>
+    val lastComposition: LiveData<Composition>
     private val repository: CompositionRepository
 
     init {
         val compositionDao = ComposerDatabase.getDatabase(application).compositionDao()
         repository = CompositionRepository(compositionDao)
         compositions = repository.compositions
+        lastComposition = repository.lastComposition
     }
 
-    fun getCompositionWIthMeasures(id: Int): List<CompositionWithMeasures> {
-        return repository.getCompositionWIthMeasures(id)
+    fun getCompositionWIthInstruments(id: Int): LiveData<CompositionWithInstruments> {
+        return repository.getCompositionWithInstruments(id)
     }
 
     fun upsertComposition(composition: Composition) {
