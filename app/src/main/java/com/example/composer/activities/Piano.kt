@@ -286,11 +286,11 @@ class Piano : AppCompatActivity() {
 
                         }
 
+                        instrumentAndMeasuresHashMap["measures"] = notesAndMeasuresArray
+                        instrumentAndMeasuresHashMap["instrument"] = instrumentHashMap
+                        instrumentWithMeasuresFirebaseAccessible.add(instrumentAndMeasuresHashMap)
                     }
 
-                    instrumentAndMeasuresHashMap["measures"] = notesAndMeasuresArray
-                    instrumentAndMeasuresHashMap["instrument"] = instrumentHashMap
-                    instrumentWithMeasuresFirebaseAccessible.add(instrumentAndMeasuresHashMap)
 
 
                     db.collection("symphonies").add(
@@ -535,6 +535,7 @@ class Piano : AppCompatActivity() {
             findViewById(R.id.tilesContainer)
         val constraintSet = ConstraintSet()
         constraintSet.clone(constraintLayout)
+        var lineCounter = 0
         var octave = 0
         outer@ while (octave < 9) {
             inner@ for (key in blackKeys) {
@@ -563,6 +564,7 @@ class Piano : AppCompatActivity() {
                 constraintSet.constrainHeight(blackPianoKey.id, blackKeyHeight)
                 constraintSet.constrainWidth(blackPianoKey.id, blacKeyWidth)
 
+                var dy = initialNotePosition - (lineSpacing / 2) * lineCounter
 
                 this.connectBlackKey(constraintSet, newKey, blackPianoKey.id)
 
@@ -572,10 +574,99 @@ class Piano : AppCompatActivity() {
                     this.soundPool.play(loadedFile, 1f, 1f, 1, 0, speed)
                     //Update this as white keys
                     //noteViewModel.addNote(Note(right = 82, bottom = 82, dx = 0f, dy = 0f))
+                    var countSum = 0f
+                    var measurePosition = 0
+
+                    val df = DecimalFormat("#.##")
+                    if (measuresWithNotes.none { it.measure.instrumentId == currentInstrumentId }) {
+                        Log.d("test 2", "note.toString()")
+                        val newMeasure = Measure(
+                            timeSignatureTop = 4,
+                            timeSignatureBottom = 4,
+                            keySignature = "c",
+                            instrumentId = currentInstrumentId,
+                            clef = "treble"
+                        )
+                        var insertObserver = measureViewModel.insertMeasure(
+                            newMeasure
+                        )
+                        insertObserver.observe(this) {
+                            currentMeasureId = it.toInt()
+                            val note = Note(
+                                right = 82,
+                                bottom = 82,
+                                dx = currentNoteDx,
+                                dy = dy,
+                                measureId = currentMeasureId,
+                                pitch = newKey
+                            )
+
+                            noteViewModel.addNote(note)
+                            insertObserver.removeObservers(this)
+                        }
+
+                        return@setOnClickListener
+                    } else {
+                        val lastMeasure =
+                            measuresWithNotes.last { it.measure.instrumentId == currentInstrumentId }
+                        lastMeasure.notes.distinctBy { it.dx }
+                            .forEach { note -> countSum += note.length }
+                        //tu je greska
+                        Log.d(
+                            "countSum",
+                            lastMeasure.notes.distinctBy { it.dx }.toString()
+                        )
+                        Log.d(
+                            "Ovo drugo",
+                            df.format(lastMeasure.measure.timeSignatureTop / lastMeasure.measure.timeSignatureBottom.toFloat())
+                        )
+                        if (df.format(countSum) == df.format(lastMeasure.measure.timeSignatureTop / lastMeasure.measure.timeSignatureBottom.toFloat())) {
+                            measurePosition = lastMeasure.measure.position + 1
+
+                            val newMeasure = Measure(
+                                timeSignatureTop = 4,
+                                timeSignatureBottom = 4,
+                                keySignature = "c",
+                                instrumentId = currentInstrumentId,
+                                clef = "treble",
+                                position = measurePosition
+                            )
+                            var insertObserver = measureViewModel.insertMeasure(
+                                newMeasure
+                            )
+                            insertObserver.observe(this) {
+                                currentMeasureId = it.toInt()
+                                val note = Note(
+                                    right = 82,
+                                    bottom = 82,
+                                    dx = currentNoteDx,
+                                    dy = dy,
+                                    measureId = currentMeasureId,
+                                    pitch = newKey
+                                )
+
+                                noteViewModel.addNote(note)
+                                insertObserver.removeObservers(this)
+                            }
+
+                            return@setOnClickListener
+                        }
+                    }
+                    Log.d("currentMeasureId", currentMeasureId.toString())
+                    val note = Note(
+                        right = 82,
+                        bottom = 82,
+                        dx = currentNoteDx,
+                        dy = dy,
+                        measureId = currentMeasureId,
+                        pitch = newKey
+                    )
+
+                    noteViewModel.addNote(note)
                 }
 
                 constraintLayout.addView(blackPianoKey)
-
+                lineCounter++
                 if (newKey == "bb0") {
                     break@inner
                 }
@@ -637,8 +728,6 @@ class Piano : AppCompatActivity() {
                     this.soundPool.play(loadedFile, 1f, 1f, 1, 0, speed)
                     var countSum = 0f
                     var measurePosition = 0
-                    Log.d("Measures with notes", measuresWithNotes.toString())
-                    Log.d("currentInstrumentId", currentInstrumentId.toString())
 
                     val df = DecimalFormat("#.##")
                     if (measuresWithNotes.none { it.measure.instrumentId == currentInstrumentId }) {

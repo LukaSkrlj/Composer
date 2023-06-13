@@ -169,7 +169,7 @@ class AllSymphoniesFragment : Fragment() {
 
                 recyclerViewHorizontal.adapter = mostLikedSymphoniesAdapter
                 recyclerViewHorizontal.layoutManager =
-                    LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+                    LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
 
             } else {
                 Log.d("Document data", "No such document")
