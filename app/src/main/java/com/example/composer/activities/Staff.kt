@@ -4,14 +4,30 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.drawable.Drawable
+import android.media.SoundPool
 import android.util.AttributeSet
 import android.util.Log
+import kotlinx.coroutines.async
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import androidx.core.content.res.ResourcesCompat
 import com.example.composer.R
 import com.example.composer.models.InstrumentWithMeasures
+import com.example.composer.models.MeasureWithNotes
 import com.example.composer.models.Note
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
+import kotlin.system.measureTimeMillis
 
 
 class Staff @JvmOverloads constructor(
@@ -27,66 +43,10 @@ class Staff @JvmOverloads constructor(
     }
 
     private val barLinePaint = Paint()
-
-    private val notesDrawable: Array<String> = arrayOf(
-        "accidental_doubleflat",
-        "accidental_doublesharp",
-        "accidental_flat",
-        "accidental_natural",
-        "accidental_sharp",
-        "dynamic_crescendo",
-        "dynamic_diminuendo",
-        "dynamic_forte",
-        "dynamic_fortepiano",
-        "dynamic_fortissimo",
-        "dynamic_mezzo_piano",
-        "dynamic_pianissimo",
-        "dynamic_pianississimo",
-        "dynamic_piano",
-        "dynamic_sforzando",
-        "left_repeat",
-        "note_beam",
-        "note_cclef",
-        "note_clef",
-        "note_dot",
-        "note_doublewholenote",
-        "note_fclef",
-        "note_gclef",
-        "note_halfnote",
-        "note_hundredtwentyeighthnote",
-        "note_octwholenote",
-        "note_quadwholenote",
-        "note_quarternote",
-        "note_semibreve",
-        "note_semigarrapatea",
-        "note_sixteenthnote",
-        "note_sixtyfourth",
-        "note_th",
-        "note_thirtysecondnote",
-        "quarter_note",
-        "rest_crochet",
-        "rest_doublewholerest",
-        "rest_eighthrest",
-        "rest_halfrest",
-        "rest_hundredtwentyeighthrest",
-        "rest_octwholerest",
-        "rest_quadwholerest",
-        "rest_sixteenthrest",
-        "rest_sixtyfourthrest",
-        "rest_thirtysecondrest",
-        "rest_twohundredfiftysix",
-        "right_repeat",
-        "time_0",
-        "time_1",
-        "time_2",
-        "time_3",
-        "time_4",
-        "time_5",
-        "time_6",
-        "time_7",
-        "time_8",
-        "time_9",
-    )
+    private val playingLinePaint = Paint()
+    private var xPositionPlayingLine = 0f
+    private var globalScope: Job? = null
+    private val soundPool: SoundPool = SoundPool.Builder().setMaxStreams(100).build()
     val notesHmap = LinkedHashMap<String, Note>()
     private val linesCount = 5
     private val lineThickness = 2f
@@ -104,6 +64,10 @@ class Staff @JvmOverloads constructor(
     private var lines: Array<Array<Float>> = arrayOf()
 
     private var instrumentsWithMeasures: List<InstrumentWithMeasures> = emptyList()
+
+    private var isMusicPlaying: Boolean = false
+    private var measuresWithNotes: List<MeasureWithNotes> = listOf()
+    private var notes: List<Note> = emptyList()
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -186,6 +150,17 @@ class Staff @JvmOverloads constructor(
         Log.d("AAAAAAAAAAAAAAAAAAAAAAAAA", instrumentsWithMeasures.joinToString(" "))
         invalidate()
     }
+
+    fun setIsMusicPlaying(isMusicPlaying: Boolean, playButton: ImageButton? = null) {
+        this.isMusicPlaying = isMusicPlaying
+        if (isMusicPlaying) {
+            playMusic(measuresWithNotes, playButton)
+
+        } else {
+            globalScope?.cancel()
+        }
+    }
+
 
 //    private fun setNotesSize() {
 //        val notesHeight = lines.last().last().toInt()
@@ -450,5 +425,87 @@ class Staff @JvmOverloads constructor(
         canvas.translate(dx, upperBound.toFloat())
         d.draw(canvas)
         canvas.translate(-dx, -upperBound.toFloat())
+    }
+
+    private fun playMusic(measuresList: List<MeasureWithNotes>, playButton: ImageButton?) {
+        val measureListCopy = measuresList.toMutableList()
+        globalScope = GlobalScope.launch(Dispatchers.IO) {
+            for (measure in measureListCopy) {
+                for ((noteIndex, note) in measure.notes.withIndex()) {
+                    val noteLength =
+                        (measure.measure.timeSignatureBottom.toFloat() * note.length * (60.0f / 100.0f)) * 1000.0f
+                    val loadedMultipleSounds = ArrayList<Int>()
+                    val currentNoteDx = note.dx
+
+
+                    if (noteIndex + 1 < measure.notes.size) {
+                        var notesIndexNext = noteIndex + 1
+                        var nextNoteDx = measure.notes[notesIndexNext].dx
+
+                        //while notes have same dx load them to array
+                        while (nextNoteDx.compareTo(currentNoteDx) == 0) {
+                            val newNoteSoundID =
+                                resources.getIdentifier(
+                                    "raw/${measure.notes[notesIndexNext].pitch}",
+                                    null,
+                                    context.packageName
+                                )
+                            val newNoteSound = async { loadSound(soundPool, newNoteSoundID) }
+                            loadedMultipleSounds.add(newNoteSound.await())
+
+                            if (notesIndexNext + 1 < measure.notes.size) {
+                                notesIndexNext++
+                                nextNoteDx = measure.notes[notesIndexNext].dx
+
+                            } else {
+                                break
+                            }
+                        }
+                    }
+
+                    if (loadedMultipleSounds.size > 0) {
+                        for (loadedSound in loadedMultipleSounds) {
+                            soundPool.play(loadedSound, 1f, 1f, 1, 0, 1f)
+                        }
+                    } else {
+                        val fileName =
+                            resources.getIdentifier(
+                                "raw/${note.pitch}",
+                                null,
+                                context.packageName
+                            )
+                        val loadedSoundId = async { loadSound(soundPool, fileName) }
+                        soundPool.play(loadedSoundId.await(), 1f, 1f, 1, 0, 1f)
+                        delay(noteLength.toLong())
+                    }
+
+                }
+            }
+            playButton?.setImageResource(R.drawable.ic_play)
+            isMusicPlaying = false
+            return@launch
+        }
+
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        globalScope?.cancel()
+    }
+
+    private suspend fun loadSound(soundPool: SoundPool, soundId: Int): Int {
+        return suspendCoroutine { continuation ->
+            val soundLoadedListener =
+                SoundPool.OnLoadCompleteListener { pool, sampleId, status ->
+                    if (status == 0) {
+                        continuation.resume(sampleId)
+                    } else {
+                        continuation.resumeWithException(Exception("Sound loading failed"))
+                    }
+                }
+
+            soundPool.setOnLoadCompleteListener(soundLoadedListener)
+            soundPool.load(context, soundId, 1)
+        }
     }
 }

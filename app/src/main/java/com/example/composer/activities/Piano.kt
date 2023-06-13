@@ -1,6 +1,7 @@
 package com.example.composer.activities
 
 
+import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.graphics.Color
 import android.media.SoundPool
@@ -10,13 +11,22 @@ import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
+import android.widget.*
 import android.widget.Button
 import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.ProgressBar
+import android.widget.TextView
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.AppCompatButton
+import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.view.WindowCompat
+import androidx.core.view.isVisible
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.composer.R
 import com.example.composer.models.*
@@ -24,6 +34,10 @@ import com.example.composer.viewmodel.CompositionViewModel
 import com.example.composer.viewmodel.InstrumentViewModel
 import com.example.composer.viewmodel.MeasureViewModel
 import com.example.composer.viewmodel.NoteViewModel
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.firebase.firestore.FirebaseFirestore
+import com.sothree.slidinguppanel.SlidingUpPanelLayout
+import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelState
 import java.text.DecimalFormat
 import kotlin.math.roundToInt
 
@@ -56,7 +70,7 @@ class Piano : AppCompatActivity() {
     // Horizontal space between two notes
     private val horizontalNoteSpacing = 100f
     private var currentNoteDx = 0f
-
+    private var isPlaying = false
     private var measuresWithNotes: List<MeasureWithNotes> = emptyList()
     private var instrumentsWithMeasures: List<InstrumentWithMeasures> = emptyList()
     private var currentInstrumentId = 0
@@ -67,6 +81,17 @@ class Piano : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_piano)
+        val slidingPaneLayout = findViewById<SlidingUpPanelLayout>(R.id.sliding_layout)
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        val headerCard = findViewById<CardView>(R.id.cardViewHeader)
+        val saveToCloudButton = findViewById<AppCompatButton>(R.id.store_to_cloud)
+        val progressBar = findViewById<ProgressBar>(R.id.progressBar_cyclic)
+        val settingsButton = findViewById<ImageButton>(R.id.settings_button)
+        val settingsPanel = findViewById<CardView>(R.id.settings_panel)
+        staff = findViewById(R.id.staff)
+        noteViewModel = ViewModelProvider(this)[NoteViewModel::class.java]
+        measureViewModel = ViewModelProvider(this)[MeasureViewModel::class.java]
+        instrumentViewModel = ViewModelProvider(this)[InstrumentViewModel::class.java]
 
         var compositionId = 0
         val extras = intent.extras
@@ -108,14 +133,15 @@ class Piano : AppCompatActivity() {
         // CompositionViewModel
         compositionViewModel = ViewModelProvider(this)[CompositionViewModel::class.java]
 
-
-        if (extras != null) {
+        if (extras != null && intent.hasExtra("compositionId")) {
             compositionId = extras.getInt("compositionId")
         }
         compositionViewModel.getCompositionWIthInstruments(compositionId)
             .observe(this) { compositionWithInstruments ->
 
                 if (compositionWithInstruments != null) {
+                    findViewById<TextView>(R.id.symphonyName).text = compositionWithInstruments.composition.name
+                    progressBar.isVisible = false
                     Log.d("Instruments with measures", compositionWithInstruments.toString())
                     if (instrumentsWithMeasures.isEmpty()) {
                         instrumentViewModel.upsertInstrument(
@@ -151,6 +177,123 @@ class Piano : AppCompatActivity() {
         noteViewModel.notes.observe(this) { notes ->
             Log.d("piano notes", notes.toString())
         }
+
+        settingsButton.setOnClickListener {
+            settingsPanel.visibility = View.VISIBLE
+        }
+
+        findViewById<ImageButton>(R.id.close_button).setOnClickListener {
+            settingsPanel.visibility = View.GONE
+        }
+
+        findViewById<ImageView>(R.id.back).setOnClickListener {
+            finish()
+        }
+
+        findViewById<ImageButton>(R.id.playButtonPiano).setOnClickListener {
+            playSymphony(!isPlaying)
+        }
+
+        //when symphony exists
+        if (extras?.getString("compositionId")
+                ?.isNotEmpty() == true && extras.getBoolean("isSymphonyMine")
+        ) {
+            val db = FirebaseFirestore.getInstance()
+            val symphonyID = extras.getString("symphonyID")
+
+            val document = symphonyID?.let { db.collection("symphonies").document(it) }
+            val currentUser = GoogleSignIn.getLastSignedInAccount(this)
+            val measureWithNotesCopyMutable: MutableList<InstrumentWithMeasures> = mutableListOf()
+
+
+                if (currentUser != null) {
+
+
+                    val newMeasuresWithNotesFirebaseAccessible: ArrayList<Any> =
+                        ArrayList()
+                    saveToCloudButton.setOnClickListener {
+
+                        for ((indexMeasure, measure) in measuresWithNotes.withIndex()) {
+                            val notes: ArrayList<HashMap<String, Any>> = ArrayList()
+                            val measureHashMap: HashMap<String, Any> = HashMap()
+                            val notesAndMeasureHashMap: HashMap<String, Any> = HashMap()
+                            measureHashMap["clef"] = measure.measure.clef
+                            measureHashMap["instrumentId"] = measure.measure.instrumentId
+                            measureHashMap["id"] = measure.measure.id
+                            measureHashMap["keySignature"] = measure.measure.keySignature
+                            measureHashMap["timeSignatureTop"] = measure.measure.timeSignatureTop
+                            measureHashMap["timeSignatureBottom"] =
+                                measure.measure.timeSignatureBottom
+
+                            notesAndMeasureHashMap["measure"] = measureHashMap
+
+                            for ((indexNote, note) in measure.notes.withIndex()) {
+                                val noteHashMap: HashMap<String, Any> = HashMap()
+                                noteHashMap["right"] = note.right
+                                noteHashMap["bottom"] = note.bottom
+                                noteHashMap["dx"] = note.dx
+                                noteHashMap["dy"] = note.dy
+                                noteHashMap["measureId"] = note.measureId
+                                noteHashMap["pitch"] = note.pitch
+                                notes.add(indexNote, noteHashMap)
+                            }
+                            notesAndMeasureHashMap["notes"] = notes
+                            newMeasuresWithNotesFirebaseAccessible.add(
+                                indexMeasure,
+                                notesAndMeasureHashMap
+                            )
+                        }
+
+
+
+//                        db.collection("symphonies").document(compositionId).collection("sheet")
+//                            .document("music")
+//                            .set(mapOf("measures" to newMeasuresWithNotesFirebaseAccessible))
+//                            .addOnSuccessListener {
+//                                Toast.makeText(
+//                                    this,
+//                                    "Symphony saved successfully",
+//                                    Toast.LENGTH_SHORT
+//                                ).show()
+//                            }
+
+                    }
+
+
+                }
+
+
+        }
+
+        val panelListener = object :
+            SlidingUpPanelLayout.PanelSlideListener {
+            override fun onPanelSlide(panel: View?, slideOffset: Float) {
+
+            }
+
+            override fun onPanelStateChanged(
+                panel: View?,
+                previousState: PanelState?,
+                newState: PanelState?
+            ) {
+                if (newState?.name == "EXPANDED") {
+                    playSymphony(false)
+                    headerCard.animate().translationY(
+                        -headerCard.height
+                            .toFloat()
+                    ).withEndAction {
+                        headerCard.visibility = View.GONE
+                    }
+                } else if (newState?.name == "COLLAPSED") {
+                    headerCard.visibility = View.VISIBLE
+                    headerCard.animate().translationY(0F)
+
+                }
+            }
+
+        }
+
+        slidingPaneLayout.addPanelSlideListener(panelListener)
 
         //REMOVE WHEN IN PRODUCTION
         instrumentViewModel.deleteInstruments()
@@ -317,6 +460,19 @@ class Piano : AppCompatActivity() {
         }
     }
 
+    fun playSymphony(playSymphony: Boolean) {
+        isPlaying = playSymphony
+        val playButton = findViewById<ImageButton>(R.id.playButtonPiano)
+
+        if (playSymphony) {
+            playButton.setImageResource(R.drawable.ic_pause)
+            staff.setIsMusicPlaying(true, playButton)
+        } else {
+            playButton.setImageResource(R.drawable.ic_play)
+            staff.setIsMusicPlaying(false)
+        }
+    }
+
     private fun addBlackPianoKeys(whiteKeyWidth: Int, whiteKeyHeight: Int) {
         val blacKeyWidth: Int = (whiteKeyWidth * 0.63).roundToInt()
         val blackKeyHeight: Int = (whiteKeyHeight * 0.6).roundToInt()
@@ -339,7 +495,10 @@ class Piano : AppCompatActivity() {
                 val fileName = resources.getIdentifier("raw/$newKey", null, this.packageName)
                 val loadedFile = soundPool.load(this, fileName, 1)
 
+
                 val blackPianoKey = Button(this)
+
+
 
                 blackPianoKey.id = View.generateViewId()
                 blackPianoKey.text = newKey
@@ -365,6 +524,7 @@ class Piano : AppCompatActivity() {
                 if (newKey == "bb0") {
                     break@inner
                 }
+
             }
         }
         constraintSet.applyTo(constraintLayout)
@@ -425,6 +585,7 @@ class Piano : AppCompatActivity() {
                     val df = DecimalFormat("#.##")
                     if (measuresWithNotes.none { it.measure.instrumentId == currentInstrumentId }) {
                         val newMeasure = Measure(
+                            id = 0,
                             timeSignatureTop = 4,
                             timeSignatureBottom = 4,
                             keySignature = "c",
@@ -505,3 +666,8 @@ class Piano : AppCompatActivity() {
         }
     }
 }
+
+
+
+
+

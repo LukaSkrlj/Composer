@@ -2,21 +2,28 @@ package com.example.composer.adapters
 
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.example.composer.R
 import com.example.composer.activities.Piano
+import com.example.composer.activities.MainActivity
+import com.example.composer.activities.PianoViewOnly
+import com.example.composer.activities.SymphonyActivity
 import com.example.composer.models.MusicModel
 
 class SymphoniesAdapter(
     var context: Context,
     var symphoniesList: ArrayList<MusicModel>,
-    val layoutID: Int
+    val layoutID: Int,
+    val isSymphonyMine: Boolean = false
 ) : RecyclerView.Adapter<SymphoniesAdapter.ViewHolder>() {
 
 
@@ -41,9 +48,10 @@ class SymphoniesAdapter(
             context.startActivity(
                 Intent(
                     context,
-                    Piano::class.java
+                   if(isSymphonyMine) Piano::class.java else PianoViewOnly::class.java
                 ).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     .putExtra("compositionId", symphoniesList[position].id)
+                    .putExtra("isSymphonyMine", isSymphonyMine)
             )
         }
 
