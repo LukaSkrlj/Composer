@@ -160,7 +160,7 @@ class Piano : AppCompatActivity() {
                     Log.d("tu smo ej", compositionWithInstruments.toString())
 
                     if (compositionWithInstruments.instruments.isNotEmpty()) {
-                        for (measure in compositionWithInstruments.instruments.get(0).measures) {
+                        for (measure in compositionWithInstruments.instruments[0].measures) {
                             for (note in measure.notes) {
                                 if (note.dx.compareTo(currentNoteDx) >= 0) {
                                     currentNoteDx = note.dx
