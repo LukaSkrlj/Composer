@@ -10,14 +10,12 @@ import com.example.composer.models.Measure
 import com.example.composer.models.MeasureWithNotes
 import com.example.composer.repository.MeasureRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
 class MeasureViewModel(application: Application) : AndroidViewModel(application) {
     val measures: LiveData<List<Measure>>
-
     val measuresWithNotes: LiveData<List<MeasureWithNotes>>
-    private var _itemId = MutableLiveData<Long>()
-    val itemId: LiveData<Long> get() = _itemId
     private val repository: MeasureRepository
 
     init {
@@ -33,11 +31,13 @@ class MeasureViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun insertMeasure(measure: Measure) {
+    fun insertMeasure(measure: Measure): LiveData<Long> {
+        val result = MutableLiveData<Long>()
         viewModelScope.launch(Dispatchers.IO) {
-            val id = repository.insertMeasure(measure)
-            _itemId.postValue(id)
+            val measureId = async { repository.insertMeasure(measure) }
+            result.postValue(measureId.await())
         }
+        return result
     }
 
     fun deleteMeasure(measure: Measure) {

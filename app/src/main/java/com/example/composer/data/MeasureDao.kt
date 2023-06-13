@@ -11,6 +11,7 @@ interface MeasureDao {
     @Upsert
     suspend fun upsertMeasure(measure: Measure)
 
+    @Transaction()
     @Insert
     suspend fun insertMeasure(measure: Measure): Long
 
