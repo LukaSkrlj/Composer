@@ -14,9 +14,13 @@ interface InstrumentDao {
     @Query("SELECT * FROM Instrument")
     fun getInstrumentsWithMeasures(): LiveData<List<InstrumentWithMeasures>>
 
+    @Query("SELECT MAX(position) FROM Instrument")
+    fun getMaxPosition(): LiveData<Int>
+
     @Query("DELETE FROM Instrument")
     fun deleteInstruments()
 
+    @Transaction()
     @Insert()
     fun insertInstrument(instrument: Instrument): Long
 }

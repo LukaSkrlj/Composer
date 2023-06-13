@@ -113,7 +113,7 @@ class Staff @JvmOverloads constructor(
                     measure.measure.timeSignatureBottom,
                     dy = instrumentSpacing
                 )
-                
+
                 val startingOffset = 50f
                 for (note in measure.notes) {
                     val d = resources.getDrawable(
@@ -126,6 +126,7 @@ class Staff @JvmOverloads constructor(
                     canvas.translate(-note.dx - startingOffset, -note.dy)
                 }
 
+
                 if (measure.notes.isNotEmpty()) {
                     previousMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
                 }
@@ -133,6 +134,7 @@ class Staff @JvmOverloads constructor(
             this.drawEnd(canvas, previousMeasureEnd)
             instrumentSpacing += defaultInstrumentSpacing
         }
+        Log.d("Tu?", "measure.notes.toString()")
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {

@@ -15,12 +15,14 @@ import kotlinx.coroutines.launch
 
 class InstrumentViewModel(application: Application) : AndroidViewModel(application) {
     val instrumentsWithMeasures: LiveData<List<InstrumentWithMeasures>>
+    val maxPosition: LiveData<Int>
     private val repository: InstrumentRepository
 
     init {
         val compositionDao = ComposerDatabase.getDatabase(application).instrumentDao()
         repository = InstrumentRepository(compositionDao)
         instrumentsWithMeasures = repository.instrumentsWithMeasures
+        maxPosition = repository.maxPosition
     }
 
     fun deleteInstruments() {

@@ -80,10 +80,18 @@ class Piano : AppCompatActivity() {
         val progressBar = findViewById<ProgressBar>(R.id.progressBar_cyclic)
         val settingsButton = findViewById<ImageButton>(R.id.settings_button)
         val settingsPanel = findViewById<CardView>(R.id.settings_panel)
+        var maxInstrumentPosition = currentInstrumentPosition
         staff = findViewById(R.id.staff)
         noteViewModel = ViewModelProvider(this)[NoteViewModel::class.java]
         measureViewModel = ViewModelProvider(this)[MeasureViewModel::class.java]
         instrumentViewModel = ViewModelProvider(this)[InstrumentViewModel::class.java]
+
+        instrumentViewModel.maxPosition.observe(this) {
+            if (it != null) {
+                maxInstrumentPosition = it
+            }
+
+        }
 
         var compositionId = 0
         val extras = intent.extras
@@ -91,13 +99,16 @@ class Piano : AppCompatActivity() {
         // Views
         staff = findViewById(R.id.staff)
         findViewById<ImageButton>(R.id.addInstrument).setOnClickListener {
-//            instrumentViewModel.upsertInstrument(
-//                Instrument(
-//                    position = currentInstrumentPosition + 1,
-//                    name = "piano",
-//                    compositionId = compositionId
-//                )
-//            )
+            currentInstrumentPosition = maxInstrumentPosition + 1
+            instrumentViewModel.insertInstrument(
+                Instrument(
+                    position = currentInstrumentPosition,
+                    name = "piano",
+                    compositionId = compositionId
+                )
+            ).observe(this) {
+                currentInstrumentId = it.toInt()
+            }
         }
 
         findViewById<ImageButton>(R.id.selectLowerInstrument).setOnClickListener {
@@ -131,7 +142,7 @@ class Piano : AppCompatActivity() {
         }
         compositionViewModel.getCompositionWIthInstruments(compositionId)
             .observe(this) { compositionWithInstruments ->
-
+                Log.d("testing", "compositionObserver")
                 if (compositionWithInstruments != null) {
                     findViewById<TextView>(R.id.symphonyName).text =
                         compositionWithInstruments.composition.name
@@ -155,10 +166,6 @@ class Piano : AppCompatActivity() {
             }
 
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-
-        noteViewModel.notes.observe(this) { notes ->
-            Log.d("piano notes", notes.toString())
-        }
 
         settingsButton.setOnClickListener {
             settingsPanel.visibility = View.VISIBLE
@@ -563,19 +570,31 @@ class Piano : AppCompatActivity() {
                     this.soundPool.play(loadedFile, 1f, 1f, 1, 0, speed)
                     var countSum = 0f
                     var measurePosition = 0
+                    Log.d("Measures with notes", measuresWithNotes.toString())
+                    Log.d("currentInstrumentId", currentInstrumentId.toString())
+
                     val df = DecimalFormat("#.##")
                     if (measuresWithNotes.none { it.measure.instrumentId == currentInstrumentId }) {
+                        Log.d("test 2", "note.toString()")
                         val newMeasure = Measure(
-                            id = 0,
                             timeSignatureTop = 4,
                             timeSignatureBottom = 4,
                             keySignature = "c",
                             instrumentId = currentInstrumentId,
                             clef = "treble"
                         )
-                        measureViewModel.upsertMeasure(
-                            newMeasure
-                        )
+                        measureViewModel.insertMeasure(newMeasure).observe(this) {
+                            currentMeasureId = it.toInt()
+                            val note = Note(
+                                right = 82,
+                                bottom = 82,
+                                dx = currentNoteDx,
+                                dy = dy,
+                                measureId = currentMeasureId
+                            )
+
+                            noteViewModel.addNote(note)
+                        }
                         return@setOnClickListener
                     } else {
                         val lastMeasure =
@@ -604,11 +623,22 @@ class Piano : AppCompatActivity() {
                             )
                             measureViewModel.insertMeasure(
                                 newMeasure
-                            )
+                            ).observe(this) {
+                                currentMeasureId = it.toInt()
+                                val note = Note(
+                                    right = 82,
+                                    bottom = 82,
+                                    dx = currentNoteDx,
+                                    dy = dy,
+                                    measureId = currentMeasureId
+                                )
+
+                                noteViewModel.addNote(note)
+                            }
                             return@setOnClickListener
                         }
                     }
-
+                    Log.d("currentMeasureId", currentMeasureId.toString())
                     val note = Note(
                         right = 82,
                         bottom = 82,
