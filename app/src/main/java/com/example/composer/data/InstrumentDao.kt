@@ -1,10 +1,7 @@
 package com.example.composer.data
 
 import androidx.lifecycle.LiveData
-import androidx.room.Dao
-import androidx.room.Query
-import androidx.room.Transaction
-import androidx.room.Upsert
+import androidx.room.*
 import com.example.composer.models.Instrument
 import com.example.composer.models.InstrumentWithMeasures
 
@@ -16,4 +13,10 @@ interface InstrumentDao {
     @Transaction
     @Query("SELECT * FROM Instrument")
     fun getInstrumentsWithMeasures(): LiveData<List<InstrumentWithMeasures>>
+
+    @Query("DELETE FROM Instrument")
+    fun deleteInstruments()
+
+    @Insert()
+    fun insertInstrument(instrument: Instrument): Long
 }

@@ -4,7 +4,7 @@ import androidx.room.Embedded
 import androidx.room.Relation
 
 data class MeasureWithNotes(
-    @Embedded var measure: Measure = Measure(),
+    @Embedded var measure: Measure,
     @Relation(
         parentColumn = "id",
         entityColumn = "measure_id",

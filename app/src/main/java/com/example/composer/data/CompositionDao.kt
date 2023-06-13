@@ -10,7 +10,7 @@ interface CompositionDao {
     @Upsert()
     suspend fun upsertComposition(composition: Composition)
 
-    @Insert
+    @Insert()
     suspend fun insertComposition(composition: Composition): Long
 
     @Delete
