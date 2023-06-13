@@ -35,7 +35,8 @@ class SearchAdapter(var context: Context, var searchList: List<SearchResult>) :
                     context,
                     PianoViewOnly::class.java
                 ).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    .putExtra("compositionId", searchList[position].id)//convert firebase id to int
+                    .putExtra("compositionId", searchList[position].id)
+                    .putExtra("isSymphonyMine", false)//convert firebase id to int
             )
         }
     }
