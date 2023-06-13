@@ -17,6 +17,9 @@ class CompositionRepository(private val compositionDao: CompositionDao) {
         compositionDao.upsertComposition(composition)
     }
 
+    suspend fun updateCompositionInfo(compositionName: String, authorName: String, compositionId: Int) {
+        return  compositionDao.updateCompositionInfo(compositionName, authorName, compositionId)
+    }
 
     suspend fun insertComposition(composition: Composition): Long {
         return compositionDao.insertComposition(composition)

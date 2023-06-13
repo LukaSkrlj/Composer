@@ -70,6 +70,7 @@ class NewCompositionActivity : AppCompatActivity() {
                         .putExtra("isSymphonyMine", true)
                         .putExtra("compositionId", it.toInt())
                 )
+                finish()
             })
 
         }

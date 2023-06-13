@@ -36,6 +36,16 @@ class CompositionViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
+    fun updateCompositionInfo(
+        compositionName: String,
+        authorName: String,
+        compositionId: Int
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.updateCompositionInfo(compositionName, authorName, compositionId)
+        }
+    }
+
     fun insertComposition(composition: Composition): LiveData<Long> {
         val result = MutableLiveData<Long>()
         viewModelScope.launch(Dispatchers.IO) {

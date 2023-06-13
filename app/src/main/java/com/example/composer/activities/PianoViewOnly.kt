@@ -21,13 +21,14 @@ class PianoViewOnly : AppCompatActivity() {
     private lateinit var staff: Staff
     private var isPlaying = false
     private var isLiked = false
+    private lateinit var progressBar: ProgressBar
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_piano_view_only)
+        progressBar = findViewById<ProgressBar>(R.id.progressBar_cyclic)
         staff = findViewById(R.id.staff)
         val extras = intent.extras
-        val progressBar = findViewById<ProgressBar>(R.id.progressBar_cyclic)
         val favoritesIcon = findViewById<ImageButton>(R.id.imageHeart)
         val currentUser = GoogleSignIn.getLastSignedInAccount(this)
         findViewById<ImageButton>(R.id.playButtonPiano).setOnClickListener {
@@ -37,6 +38,7 @@ class PianoViewOnly : AppCompatActivity() {
         findViewById<ImageView>(R.id.back).setOnClickListener {
             finish()
         }
+
 
         if (currentUser == null) {
             favoritesIcon.isVisible = false
@@ -93,8 +95,12 @@ class PianoViewOnly : AppCompatActivity() {
                                 db.collection("favorites").add(data)
                             }
                         }
+                    } else {
+                        progressBar.isVisible = false
                     }
 
+                } else {
+                    progressBar.isVisible = false
                 }
 
             }
@@ -173,13 +179,13 @@ class PianoViewOnly : AppCompatActivity() {
     private fun checkIfSymphonyIsLiked(
         db: FirebaseFirestore,
         userID: String,
-        compositionId: String
+        compositionId: String,
     ) {
         db.collectionGroup("favorites")
             .whereEqualTo("userID", userID)
             .whereEqualTo("compositionId", compositionId).get()
             .addOnCompleteListener {
-                it.exception?.localizedMessage?.let { it1 -> Log.d("tu smo ej", it1) }
+                progressBar.isVisible = false
                 if (it.result.isEmpty) {
                     addLikeBackground(false)
 

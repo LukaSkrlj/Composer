@@ -27,6 +27,7 @@ import com.example.composer.viewmodel.InstrumentViewModel
 import com.example.composer.viewmodel.MeasureViewModel
 import com.example.composer.viewmodel.NoteViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.firestore.FirebaseFirestore
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelState
@@ -80,6 +81,9 @@ class Piano : AppCompatActivity() {
         val progressBar = findViewById<ProgressBar>(R.id.progressBar_cyclic)
         val settingsButton = findViewById<ImageButton>(R.id.settings_button)
         val settingsPanel = findViewById<CardView>(R.id.settings_panel)
+        val compositionNameInput = findViewById<TextInputLayout>(R.id.compostion_name)
+        val authorNameInput = findViewById<TextInputLayout>(R.id.author_name)
+        val currentUser = GoogleSignIn.getLastSignedInAccount(this)
         staff = findViewById(R.id.staff)
         noteViewModel = ViewModelProvider(this)[NoteViewModel::class.java]
         measureViewModel = ViewModelProvider(this)[MeasureViewModel::class.java]
@@ -122,6 +126,12 @@ class Piano : AppCompatActivity() {
             currentNoteDx += horizontalNoteSpacing
         }
 
+
+        if (currentUser == null) {
+            saveToCloudButton.isVisible = false
+        }
+
+
         // CompositionViewModel
         compositionViewModel = ViewModelProvider(this)[CompositionViewModel::class.java]
 
@@ -135,7 +145,19 @@ class Piano : AppCompatActivity() {
                 if (compositionWithInstruments != null) {
                     findViewById<TextView>(R.id.symphonyName).text =
                         compositionWithInstruments.composition.name
+
+                    authorNameInput.editText?.setText(compositionWithInstruments.composition.author)
+                    compositionNameInput.editText?.setText(compositionWithInstruments.composition.name)
                     progressBar.isVisible = false
+
+                    findViewById<AppCompatButton>(R.id.save_changes).setOnClickListener {
+
+                        this.updateComposition(authorNameInput, compositionNameInput, compositionId, compositionWithInstruments)
+
+                    }
+
+
+
                     Log.d("Instruments with measures", compositionWithInstruments.toString())
                     instrumentsWithMeasures = compositionWithInstruments.instruments
                     if (instrumentsWithMeasures.isEmpty()) {
@@ -645,6 +667,43 @@ class Piano : AppCompatActivity() {
                 whitePianoTile.measuredHeight
             )
         }
+    }
+
+    private fun updateComposition(
+        authorNameInput: TextInputLayout,
+        compositionNameInput: TextInputLayout,
+        compositionId: Int,
+        compositionWithInstruments: CompositionWithInstruments
+    ) {
+        if (authorNameInput.editText?.text?.isEmpty() == true && compositionNameInput.editText?.text?.isEmpty() == true) {
+            compositionNameInput.editText?.error = "Composition name is required"
+            authorNameInput.editText?.error = "Author name is required"
+            return
+        }
+
+        if (authorNameInput.editText?.text?.isEmpty() == true) {
+            authorNameInput.editText?.error = "Author name is required"
+            return
+        }
+
+        if (compositionNameInput.editText?.text?.isEmpty() == true) {
+            compositionNameInput.editText?.error = "Composition name is required"
+            return
+        }
+
+
+        compositionViewModel.updateCompositionInfo(
+            compositionName = compositionNameInput.editText?.text.toString(),
+            authorName = authorNameInput.editText?.text.toString(),
+            compositionId = compositionId
+        )
+
+
+
+        findViewById<TextView>(R.id.symphonyName).text =
+            compositionWithInstruments.composition.name
+
+
     }
 }
 

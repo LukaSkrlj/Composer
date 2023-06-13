@@ -16,6 +16,9 @@ interface CompositionDao {
     @Delete
     suspend fun deleteComposition(composition: Composition)
 
+    @Query("UPDATE Composition SET name= :compositionName, author = :authorName WHERE id = :compositionId")
+    suspend fun  updateCompositionInfo(compositionName: String, authorName: String, compositionId: Int)
+
     @Transaction
     @Query("SELECT * FROM Composition WHERE id = :id")
     fun getCompositionWithInstruments(id: Int): LiveData<CompositionWithInstruments>
