@@ -594,7 +594,8 @@ class Piano : AppCompatActivity() {
                                 bottom = 82,
                                 dx = currentNoteDx,
                                 dy = dy,
-                                measureId = currentMeasureId
+                                measureId = currentMeasureId,
+                                pitch = newKey
                             )
 
                             noteViewModel.addNote(note)
@@ -637,7 +638,8 @@ class Piano : AppCompatActivity() {
                                     bottom = 82,
                                     dx = currentNoteDx,
                                     dy = dy,
-                                    measureId = currentMeasureId
+                                    measureId = currentMeasureId,
+                                    pitch = newKey
                                 )
 
                                 noteViewModel.addNote(note)
@@ -653,7 +655,8 @@ class Piano : AppCompatActivity() {
                         bottom = 82,
                         dx = currentNoteDx,
                         dy = dy,
-                        measureId = currentMeasureId
+                        measureId = currentMeasureId,
+                        pitch = newKey
                     )
 
                     noteViewModel.addNote(note)
