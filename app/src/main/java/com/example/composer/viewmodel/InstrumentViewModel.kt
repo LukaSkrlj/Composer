@@ -21,6 +21,12 @@ class InstrumentViewModel(application: Application) : AndroidViewModel(applicati
         instrumentsWithMeasures = repository.instrumentsWithMeasures
     }
 
+    fun deleteInstruments() {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.deleteInstruments()
+        }
+    }
+
     fun upsertInstrument(instrument: Instrument) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.upsertInstrument(instrument)

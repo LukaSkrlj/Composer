@@ -438,7 +438,6 @@ class Staff @JvmOverloads constructor(
         d.draw(canvas)
         canvas.translate(-dx, 0f)
 
-        val lowerBound = lines.first().first().toInt() / 2
         resourceId = resources.getIdentifier(
             "time_$lowerNumber", "drawable",
             context.packageName
