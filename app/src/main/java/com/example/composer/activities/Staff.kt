@@ -74,7 +74,7 @@ class Staff @JvmOverloads constructor(
 
         var instrumentSpacing = 0f
         for (instrument in instrumentsWithMeasures) {
-
+            Log.d("tu smo ej", instrument.toString())
             var previousMeasureEnd = 0f
             for (measure in instrument.measures) {
 

@@ -17,6 +17,11 @@ class CompositionRepository(private val compositionDao: CompositionDao) {
         compositionDao.upsertComposition(composition)
     }
 
+
+    suspend fun insertComposition(composition: Composition): Long {
+        return compositionDao.insertComposition(composition)
+    }
+
     suspend fun deleteComposition(composition: Composition) {
         compositionDao.deleteComposition(composition)
     }

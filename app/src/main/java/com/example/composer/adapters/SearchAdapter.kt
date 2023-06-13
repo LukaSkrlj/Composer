@@ -11,6 +11,7 @@ import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.example.composer.R
+import com.example.composer.activities.PianoViewOnly
 import com.example.composer.activities.SymphonyActivity
 import com.example.composer.models.SearchResult
 
@@ -32,7 +33,7 @@ class SearchAdapter(var context: Context, var searchList: List<SearchResult>) :
             context.startActivity(
                 Intent(
                     context,
-                    SymphonyActivity::class.java
+                    PianoViewOnly::class.java
                 ).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     .putExtra("compositionId", searchList[position].id)//convert firebase id to int
             )
