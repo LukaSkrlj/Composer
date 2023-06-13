@@ -56,6 +56,7 @@ class Piano : AppCompatActivity() {
     private lateinit var instrumentViewModel: InstrumentViewModel
     private lateinit var compositionViewModel: CompositionViewModel
     private lateinit var staff: Staff
+    private lateinit var compositionWithInstruments: CompositionWithInstruments
     private val lineSpacing = Staff.getSpacing()
     private val initialNotePosition =
         lineSpacing.toInt() * 13
@@ -115,6 +116,8 @@ class Piano : AppCompatActivity() {
             }
         }
 
+
+
         findViewById<ImageButton>(R.id.selectLowerInstrument).setOnClickListener {
             if (instrumentsWithMeasures.any { it.instrument.position == currentInstrumentPosition + 1 }) {
                 currentInstrumentPosition += 1
@@ -152,8 +155,21 @@ class Piano : AppCompatActivity() {
         }
         compositionViewModel.getCompositionWIthInstruments(compositionId)
             .observe(this) { compositionWithInstruments ->
-                Log.d("testing", "compositionObserver")
                 if (compositionWithInstruments != null) {
+
+                    Log.d("tu smo ej", compositionWithInstruments.toString())
+
+                    if (compositionWithInstruments.instruments.isNotEmpty()) {
+                        for (measure in compositionWithInstruments.instruments.get(0).measures) {
+                            for (note in measure.notes) {
+                                if (note.dx.compareTo(currentNoteDx) >= 0) {
+                                    currentNoteDx = note.dx
+                                }
+                            }
+                        }
+                    }
+
+                    this.compositionWithInstruments = compositionWithInstruments
                     findViewById<TextView>(R.id.symphonyName).text =
                         compositionWithInstruments.composition.name
 
@@ -163,13 +179,17 @@ class Piano : AppCompatActivity() {
 
                     findViewById<AppCompatButton>(R.id.save_changes).setOnClickListener {
 
-                        this.updateComposition(authorNameInput, compositionNameInput, compositionId, compositionWithInstruments)
+                        this.updateComposition(
+                            authorNameInput,
+                            compositionNameInput,
+                            compositionId,
+                            compositionWithInstruments
+                        )
 
                     }
 
 
 
-                    Log.d("Instruments with measures", compositionWithInstruments.toString())
                     instrumentsWithMeasures = compositionWithInstruments.instruments
                     if (instrumentsWithMeasures.isEmpty()) {
                         instrumentViewModel.insertInstrument(
@@ -205,68 +225,89 @@ class Piano : AppCompatActivity() {
             playSymphony(!isPlaying)
         }
 
-        //when symphony exists
-        if (extras?.getString("compositionId")
-                ?.isNotEmpty() == true && extras.getBoolean("isSymphonyMine")
-        ) {
+        if (extras?.getBoolean("isSymphonyMine") == true) {
             val db = FirebaseFirestore.getInstance()
-            val symphonyID = extras.getString("symphonyID")
-
-            val document = symphonyID?.let { db.collection("symphonies").document(it) }
-            val currentUser = GoogleSignIn.getLastSignedInAccount(this)
-            val measureWithNotesCopyMutable: MutableList<InstrumentWithMeasures> = mutableListOf()
-
 
             if (currentUser != null) {
 
-
-                val newMeasuresWithNotesFirebaseAccessible: ArrayList<Any> =
-                    ArrayList()
                 saveToCloudButton.setOnClickListener {
+                    val instrumentWithMeasuresFirebaseAccessible: ArrayList<Any> =
+                        ArrayList()
+                    for ((elementIndex, element) in instrumentsWithMeasures.withIndex()) {
 
-                    for ((indexMeasure, measure) in measuresWithNotes.withIndex()) {
-                        val notes: ArrayList<HashMap<String, Any>> = ArrayList()
-                        val measureHashMap: HashMap<String, Any> = HashMap()
+                        val instrumentHashMap: HashMap<String, Any> = HashMap()
+                        val instrumentAndMeasuresHashMap: HashMap<String, Any> = HashMap()
                         val notesAndMeasureHashMap: HashMap<String, Any> = HashMap()
-                        measureHashMap["clef"] = measure.measure.clef
-                        measureHashMap["instrumentId"] = measure.measure.instrumentId
-                        measureHashMap["id"] = measure.measure.id
-                        measureHashMap["keySignature"] = measure.measure.keySignature
-                        measureHashMap["timeSignatureTop"] = measure.measure.timeSignatureTop
-                        measureHashMap["timeSignatureBottom"] =
-                            measure.measure.timeSignatureBottom
+                        val notesAndMeasuresArray: ArrayList<Any> = ArrayList()
+                        instrumentHashMap["compositionId"] = element.instrument.compositionId
+                        instrumentHashMap["id"] = element.instrument.id
+                        instrumentHashMap["name"] = element.instrument.name
+                        instrumentHashMap["position"] = element.instrument.position
 
-                        notesAndMeasureHashMap["measure"] = measureHashMap
+                        for ((measureWithNotesIndex, measureWithNotes) in element.measures.withIndex()) {
 
-                        for ((indexNote, note) in measure.notes.withIndex()) {
-                            val noteHashMap: HashMap<String, Any> = HashMap()
-                            noteHashMap["right"] = note.right
-                            noteHashMap["bottom"] = note.bottom
-                            noteHashMap["dx"] = note.dx
-                            noteHashMap["dy"] = note.dy
-                            noteHashMap["measureId"] = note.measureId
-                            noteHashMap["pitch"] = note.pitch
-                            notes.add(indexNote, noteHashMap)
+
+                            val notes: ArrayList<HashMap<String, Any>> = ArrayList()
+                            val measureHashMap: HashMap<String, Any> = HashMap()
+                            measureHashMap["clef"] = measureWithNotes.measure.clef
+                            measureHashMap["instrumentId"] = measureWithNotes.measure.instrumentId
+                            measureHashMap["id"] = measureWithNotes.measure.id
+                            measureHashMap["keySignature"] = measureWithNotes.measure.keySignature
+                            measureHashMap["timeSignatureTop"] =
+                                measureWithNotes.measure.timeSignatureTop
+                            measureHashMap["position"] = measureWithNotes.measure.position
+                            measureHashMap["timeSignatureBottom"] =
+                                measureWithNotes.measure.timeSignatureBottom
+                            notesAndMeasureHashMap["measure"] = measureHashMap
+
+                            for ((indexNote, note) in measureWithNotes.notes.withIndex()) {
+                                val noteHashMap: HashMap<String, Any> = HashMap()
+                                noteHashMap["right"] = note.right
+                                noteHashMap["left"] = note.left
+                                noteHashMap["top"] = note.top
+                                noteHashMap["length"] = note.length
+                                noteHashMap["noteId"] = note.noteId
+                                noteHashMap["bottom"] = note.bottom
+                                noteHashMap["dx"] = note.dx
+                                noteHashMap["dy"] = note.dy
+                                noteHashMap["measureId"] = note.measureId
+                                noteHashMap["resourceId"] = note.resourceId
+                                noteHashMap["pitch"] = note.pitch
+                                notes.add(indexNote, noteHashMap)
+                            }
+                            notesAndMeasureHashMap["notes"] = notes
+
+                            Log.d("tu smo ej", notesAndMeasureHashMap.toString())
+                            notesAndMeasuresArray.add(measureWithNotesIndex, notesAndMeasureHashMap)
                         }
-                        notesAndMeasureHashMap["notes"] = notes
-                        newMeasuresWithNotesFirebaseAccessible.add(
-                            indexMeasure,
-                            notesAndMeasureHashMap
+                        instrumentAndMeasuresHashMap["measures"] = notesAndMeasuresArray
+                        instrumentAndMeasuresHashMap["instrument"] = instrumentHashMap
+                        instrumentWithMeasuresFirebaseAccessible.add(
+                            elementIndex,
+                            instrumentAndMeasuresHashMap
                         )
+
                     }
 
-
-//                        db.collection("symphonies").document(compositionId).collection("sheet")
-//                            .document("music")
-//                            .set(mapOf("measures" to newMeasuresWithNotesFirebaseAccessible))
-//                            .addOnSuccessListener {
-//                                Toast.makeText(
-//                                    this,
-//                                    "Symphony saved successfully",
-//                                    Toast.LENGTH_SHORT
-//                                ).show()
-//                            }
-
+                    db.collection("symphonies").add(
+                        hashMapOf(
+                            "likes" to 0,
+                            "symphonyName" to compositionWithInstruments.composition.name,
+                            "userID" to currentUser.id.toString(),
+                            "symphonyComposer" to compositionWithInstruments.composition.author,
+                            "symphonyDurationSeconds" to 0
+                        )
+                    ).addOnSuccessListener { document ->
+                        document.collection("sheet").document("music")
+                            .set(mapOf("compositionWithInstruments" to instrumentWithMeasuresFirebaseAccessible))
+                            .addOnSuccessListener {
+                                Toast.makeText(
+                                    this,
+                                    "Symphony published successfully",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                    }
                 }
 
 
@@ -306,9 +347,9 @@ class Piano : AppCompatActivity() {
         slidingPaneLayout.addPanelSlideListener(panelListener)
 
         //REMOVE WHEN IN PRODUCTION
-        instrumentViewModel.deleteInstruments()
-        noteViewModel.deleteNotes()
-        measureViewModel.deleteMeasures()
+//        instrumentViewModel.deleteInstruments()
+//        noteViewModel.deleteNotes()
+//        measureViewModel.deleteMeasures()
 
         this.hideSystemBars()
 

@@ -328,36 +328,42 @@ class Staff @JvmOverloads constructor(
                     10 + signatureWidth,
                     (lineSpacing / 2).toInt() + signatureHeight
                 )
+
                 2 -> signatureArray[i]?.setBounds(
                     30,
                     -(lineSpacing + 0.2 * lineThickness).toInt(),
                     30 + signatureWidth,
                     -(lineSpacing + 0.2 * lineThickness).toInt() + signatureHeight
                 )
+
                 3 -> signatureArray[i]?.setBounds(
                     55,
                     (lineSpacing / 1).toInt(),
                     55 + signatureWidth,
                     (lineSpacing / 1).toInt() + signatureHeight
                 )
+
                 4 -> signatureArray[i]?.setBounds(
                     75,
                     -(lineSpacing / 5 + 3 * lineThickness).toInt(),
                     75 + signatureWidth,
                     -(lineSpacing / 5 + 3 * lineThickness).toInt() + signatureHeight
                 )
+
                 5 -> signatureArray[i]?.setBounds(
                     100,
                     (1.6 * lineSpacing).toInt(),
                     100 + signatureWidth,
                     (1.6 * lineSpacing).toInt() + signatureHeight
                 )
+
                 6 -> signatureArray[i]?.setBounds(
                     125,
                     -(lineSpacing / 25).toInt(),
                     125 + signatureWidth,
                     -(lineSpacing / 25).toInt() + signatureHeight
                 )
+
                 7 -> signatureArray[i]?.setBounds(
                     150,
                     (2 * lineSpacing).toInt(),
