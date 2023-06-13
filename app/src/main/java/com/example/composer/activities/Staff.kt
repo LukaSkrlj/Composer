@@ -68,7 +68,6 @@ class Staff @JvmOverloads constructor(
 
             var previousMeasureEnd = 0f
             for (measure in instrument.measures) {
-
                 //Measure start position
                 var currentMeasureEnd = lastNoteMeasureSpacing
                 if (measure.notes.isNotEmpty()) {

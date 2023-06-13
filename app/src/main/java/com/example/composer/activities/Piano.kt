@@ -157,8 +157,7 @@ class Piano : AppCompatActivity() {
             .observe(this) { compositionWithInstruments ->
                 if (compositionWithInstruments != null) {
 
-                    Log.d("tu smo ej", compositionWithInstruments.toString())
-
+                    //fine largest dx
                     if (compositionWithInstruments.instruments.isNotEmpty()) {
                         for (measure in compositionWithInstruments.instruments[0].measures) {
                             for (note in measure.notes) {
@@ -168,6 +167,8 @@ class Piano : AppCompatActivity() {
                             }
                         }
                     }
+
+
 
                     this.compositionWithInstruments = compositionWithInstruments
                     findViewById<TextView>(R.id.symphonyName).text =
@@ -230,16 +231,15 @@ class Piano : AppCompatActivity() {
             val db = FirebaseFirestore.getInstance()
 
             if (currentUser != null) {
-
                 saveToCloudButton.setOnClickListener {
                     val instrumentWithMeasuresFirebaseAccessible: ArrayList<Any> =
                         ArrayList()
+                    val instrumentHashMap: HashMap<String, Any> = HashMap()
+                    val instrumentAndMeasuresHashMap: HashMap<String, Any> = HashMap()
+                    val notesAndMeasuresArray: ArrayList<Any> = ArrayList<Any>()
+
                     for ((elementIndex, element) in instrumentsWithMeasures.withIndex()) {
 
-                        val instrumentHashMap: HashMap<String, Any> = HashMap()
-                        val instrumentAndMeasuresHashMap: HashMap<String, Any> = HashMap()
-                        val notesAndMeasureHashMap: HashMap<String, Any> = HashMap()
-                        val notesAndMeasuresArray: ArrayList<Any> = ArrayList()
                         instrumentHashMap["compositionId"] = element.instrument.compositionId
                         instrumentHashMap["id"] = element.instrument.id
                         instrumentHashMap["name"] = element.instrument.name
@@ -259,7 +259,7 @@ class Piano : AppCompatActivity() {
                             measureHashMap["position"] = measureWithNotes.measure.position
                             measureHashMap["timeSignatureBottom"] =
                                 measureWithNotes.measure.timeSignatureBottom
-                            notesAndMeasureHashMap["measure"] = measureHashMap
+
 
                             for ((indexNote, note) in measureWithNotes.notes.withIndex()) {
                                 val noteHashMap: HashMap<String, Any> = HashMap()
@@ -274,21 +274,24 @@ class Piano : AppCompatActivity() {
                                 noteHashMap["measureId"] = note.measureId
                                 noteHashMap["resourceId"] = note.resourceId
                                 noteHashMap["pitch"] = note.pitch
-                                notes.add(indexNote, noteHashMap)
+                                notes.add(noteHashMap)
                             }
-                            notesAndMeasureHashMap["notes"] = notes
 
-                            Log.d("tu smo ej", notesAndMeasureHashMap.toString())
-                            notesAndMeasuresArray.add(measureWithNotesIndex, notesAndMeasureHashMap)
+                            notesAndMeasuresArray.add(
+                                hashMapOf(
+                                    "measure" to measureHashMap,
+                                    "notes" to notes
+                                )
+                            )
+
                         }
-                        instrumentAndMeasuresHashMap["measures"] = notesAndMeasuresArray
-                        instrumentAndMeasuresHashMap["instrument"] = instrumentHashMap
-                        instrumentWithMeasuresFirebaseAccessible.add(
-                            elementIndex,
-                            instrumentAndMeasuresHashMap
-                        )
 
                     }
+
+                    instrumentAndMeasuresHashMap["measures"] = notesAndMeasuresArray
+                    instrumentAndMeasuresHashMap["instrument"] = instrumentHashMap
+                    instrumentWithMeasuresFirebaseAccessible.add(instrumentAndMeasuresHashMap)
+
 
                     db.collection("symphonies").add(
                         hashMapOf(
