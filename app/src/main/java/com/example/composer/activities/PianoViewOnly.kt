@@ -12,6 +12,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
+import androidx.core.view.isVisible
 import com.example.composer.R
 import com.example.composer.models.FavoriteModel
 import com.example.composer.models.InstrumentWithMeasures
@@ -40,6 +41,10 @@ class PianoViewOnly : AppCompatActivity() {
 
         findViewById<ImageView>(R.id.back).setOnClickListener {
             finish()
+        }
+
+        if (currentUser == null) {
+            favoritesIcon.isVisible = false
         }
 
 

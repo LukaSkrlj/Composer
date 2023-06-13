@@ -71,7 +71,7 @@ class FavoritesFragment : Fragment() {
                                     document.get("symphonyName") as String?,
                                     document.get("symphonyComposer") as String?,
                                     (document.get("symphonyDurationSeconds") as Long).toInt(),
-                                    document.get("symphonyID").toString()
+                                    document.get("compositionId").toString()
                                 )
                             )
                         }
