@@ -103,7 +103,7 @@ class Piano : AppCompatActivity() {
             instrumentViewModel.insertInstrument(
                 Instrument(
                     position = currentInstrumentPosition,
-                    name = "piano",
+                    name = "guitar",
                     compositionId = compositionId
                 )
             ).observe(this) {
@@ -160,6 +160,7 @@ class Piano : AppCompatActivity() {
                             currentInstrumentId = it.toInt()
                         }
                     } else {
+                        measuresWithNotes = instrumentsWithMeasures.map { it.measures }.flatten()
                         staff.drawNotes(instrumentsWithMeasures)
                     }
                 }
@@ -583,7 +584,10 @@ class Piano : AppCompatActivity() {
                             instrumentId = currentInstrumentId,
                             clef = "treble"
                         )
-                        measureViewModel.insertMeasure(newMeasure).observe(this) {
+                        var insertObserver = measureViewModel.insertMeasure(
+                            newMeasure
+                        )
+                        insertObserver.observe(this) {
                             currentMeasureId = it.toInt()
                             val note = Note(
                                 right = 82,
@@ -594,7 +598,9 @@ class Piano : AppCompatActivity() {
                             )
 
                             noteViewModel.addNote(note)
+                            insertObserver.removeObservers(this)
                         }
+
                         return@setOnClickListener
                     } else {
                         val lastMeasure =
@@ -621,9 +627,10 @@ class Piano : AppCompatActivity() {
                                 clef = "treble",
                                 position = measurePosition
                             )
-                            measureViewModel.insertMeasure(
+                            var insertObserver = measureViewModel.insertMeasure(
                                 newMeasure
-                            ).observe(this) {
+                            )
+                            insertObserver.observe(this) {
                                 currentMeasureId = it.toInt()
                                 val note = Note(
                                     right = 82,
@@ -634,7 +641,9 @@ class Piano : AppCompatActivity() {
                                 )
 
                                 noteViewModel.addNote(note)
+                                insertObserver.removeObservers(this)
                             }
+
                             return@setOnClickListener
                         }
                     }
