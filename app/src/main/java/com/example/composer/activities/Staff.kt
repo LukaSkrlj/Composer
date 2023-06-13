@@ -7,7 +7,6 @@ import android.graphics.drawable.Drawable
 import android.media.SoundPool
 import android.util.AttributeSet
 import android.util.Log
-import kotlinx.coroutines.async
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
@@ -16,18 +15,10 @@ import com.example.composer.R
 import com.example.composer.models.InstrumentWithMeasures
 import com.example.composer.models.MeasureWithNotes
 import com.example.composer.models.Note
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.*
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
-import kotlin.system.measureTimeMillis
 
 
 class Staff @JvmOverloads constructor(
@@ -79,7 +70,11 @@ class Staff @JvmOverloads constructor(
             for (measure in instrument.measures) {
 
                 //Measure start position
-                val currentMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
+                var currentMeasureEnd = lastNoteMeasureSpacing
+                if (measure.notes.isNotEmpty()) {
+                    Log.d("notes", measure.notes.toString())
+                    currentMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
+                }
 //            measure(currentMeasureEnd.toInt(), 500)
                 this.layoutParams = ViewGroup.LayoutParams(currentMeasureEnd.toInt(), 500)
                 //Bar line
@@ -112,14 +107,13 @@ class Staff @JvmOverloads constructor(
                 barLinePaint.isFilterBitmap = true
                 canvas.drawLines(lines.flatten().toFloatArray(), barLinePaint)
 
-                Log.d("notes", measure.notes.toString())
-
                 drawTimeSignature(
                     canvas,
                     measure.measure.timeSignatureTop,
                     measure.measure.timeSignatureBottom,
                     dy = instrumentSpacing
                 )
+                
                 val startingOffset = 50f
                 for (note in measure.notes) {
                     val d = resources.getDrawable(
@@ -132,7 +126,9 @@ class Staff @JvmOverloads constructor(
                     canvas.translate(-note.dx - startingOffset, -note.dy)
                 }
 
-                previousMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
+                if (measure.notes.isNotEmpty()) {
+                    previousMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
+                }
             }
             this.drawEnd(canvas, previousMeasureEnd)
             instrumentSpacing += defaultInstrumentSpacing

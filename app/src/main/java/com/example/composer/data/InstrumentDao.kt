@@ -16,4 +16,7 @@ interface InstrumentDao {
 
     @Query("DELETE FROM Instrument")
     fun deleteInstruments()
+
+    @Insert()
+    fun insertInstrument(instrument: Instrument): Long
 }

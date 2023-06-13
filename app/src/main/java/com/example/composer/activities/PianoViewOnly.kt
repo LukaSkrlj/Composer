@@ -1,7 +1,6 @@
 package com.example.composer.activities
 
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.util.Log
 import android.view.View
 import android.view.WindowManager
@@ -9,15 +8,11 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import com.example.composer.R
 import com.example.composer.models.FavoriteModel
 import com.example.composer.models.InstrumentWithMeasures
-import com.example.composer.models.Measure
-import com.example.composer.models.MeasureWithNotes
-import com.example.composer.models.Note
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -99,55 +94,54 @@ class PianoViewOnly : AppCompatActivity() {
 
             }
 
-            document?.collection("sheet")?.document("music")?.get()
-                ?.addOnCompleteListener { sheet ->
-
-                    if (sheet.result.exists()) {
-                        val measures =
-                            sheet.result.data?.get("measures") as ArrayList<HashMap<Any, Any>>
-
-                        for ((measureIndex, element) in measures.withIndex()) {
-
-                            val measure = element["measure"] as HashMap<*, *>
-                            val notes = element["notes"] as ArrayList<HashMap<Any, Any>>
-                            var newMeasureWithNotes: MeasureWithNotes = MeasureWithNotes()
-                            val newNotesList: MutableList<Note> = mutableListOf()
-                            val newMeasure = Measure(
-                                id = (measure["id"] as Long).toInt(),
-                                timeSignatureTop = (measure["timeSignatureTop"] as Long).toInt(),
-                                timeSignatureBottom = (measure["timeSignatureBottom"] as Long).toInt(),
-                                keySignature = measure["keySignature"] as String,
-                                compositionId = (measure["compositionId"] as Long).toInt(),
-                                clef = measure["clef"] as String,
-                                instrumentId = 0
-                            )
-
-                            newMeasureWithNotes.measure = newMeasure
-
-                            for ((noteIndex, note) in notes.withIndex()) {
-                                val newNote = Note(
-                                    right = (note["right"] as Long).toInt(),
-                                    bottom = (note["bottom"] as Long).toInt(),
-                                    dx = (note["dx"] as Double).toFloat(),
-                                    dy = (note["dy"] as Double).toFloat(),
-                                    measureId = (note["measureId"] as Long).toInt(),
-                                    key = note["key"] as String
-                                )
-                                newNotesList.add(noteIndex, newNote)
-                            }
-                            newMeasureWithNotes.notes = newNotesList.toList()
-//                        measureWithNotesCopyMutable.add(measureIndex, newMeasureWithNotes)
-
-                        }
-                        staff.drawNotes(measureWithNotesCopyMutable)
-                        progressBar.visibility = View.GONE
-
-                    } else {
-                        progressBar.visibility = View.GONE
-                    }
-
-
-                }
+//            document?.collection("sheet")?.document("music")?.get()
+//                ?.addOnCompleteListener { sheet ->
+//
+//                    if (sheet.result.exists()) {
+//                        val measures =
+//                            sheet.result.data?.get("measures") as ArrayList<HashMap<Any, Any>>
+//
+//                        for ((measureIndex, element) in measures.withIndex()) {
+//
+//                            val measure = element["measure"] as HashMap<*, *>
+//                            val notes = element["notes"] as ArrayList<HashMap<Any, Any>>
+//                            var newMeasureWithNotes: MeasureWithNotes = MeasureWithNotes(measure = Measure())
+//                            val newNotesList: MutableList<Note> = mutableListOf()
+//                            val newMeasure = Measure(
+//                                id = (measure["id"] as Long).toInt(),
+//                                timeSignatureTop = (measure["timeSignatureTop"] as Long).toInt(),
+//                                timeSignatureBottom = (measure["timeSignatureBottom"] as Long).toInt(),
+//                                keySignature = measure["keySignature"] as String,
+//                                instrumentId = (measure["instrumentId"] as Long).toInt(),
+//                                clef = measure["clef"] as String,
+//                            )
+//
+//                            newMeasureWithNotes.measure = newMeasure
+//
+//                            for ((noteIndex, note) in notes.withIndex()) {
+//                                val newNote = Note(
+//                                    right = (note["right"] as Long).toInt(),
+//                                    bottom = (note["bottom"] as Long).toInt(),
+//                                    dx = (note["dx"] as Double).toFloat(),
+//                                    dy = (note["dy"] as Double).toFloat(),
+//                                    measureId = (note["measureId"] as Long).toInt(),
+//                                    key = note["key"] as String
+//                                )
+//                                newNotesList.add(noteIndex, newNote)
+//                            }
+//                            newMeasureWithNotes.notes = newNotesList.toList()
+////                        measureWithNotesCopyMutable.add(measureIndex, newMeasureWithNotes)
+//
+//                        }
+//                        staff.drawNotes(measureWithNotesCopyMutable)
+//                        progressBar.visibility = View.GONE
+//
+//                    } else {
+//                        progressBar.visibility = View.GONE
+//                    }
+//
+//
+//                }
         }
         this.hideSystemBars()
     }

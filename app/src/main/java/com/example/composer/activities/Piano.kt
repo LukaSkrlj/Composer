@@ -1,7 +1,6 @@
 package com.example.composer.activities
 
 
-import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.graphics.Color
 import android.media.SoundPool
@@ -12,12 +11,6 @@ import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import android.widget.*
-import android.widget.Button
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.ProgressBar
-import android.widget.TextView
-import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
@@ -26,7 +19,6 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.view.WindowCompat
 import androidx.core.view.isVisible
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.composer.R
 import com.example.composer.models.*
@@ -99,13 +91,13 @@ class Piano : AppCompatActivity() {
         // Views
         staff = findViewById(R.id.staff)
         findViewById<ImageButton>(R.id.addInstrument).setOnClickListener {
-            instrumentViewModel.upsertInstrument(
-                Instrument(
-                    position = currentInstrumentPosition + 1,
-                    name = "piano",
-                    compositionId = compositionId
-                )
-            )
+//            instrumentViewModel.upsertInstrument(
+//                Instrument(
+//                    position = currentInstrumentPosition + 1,
+//                    name = "piano",
+//                    compositionId = compositionId
+//                )
+//            )
         }
 
         findViewById<ImageButton>(R.id.selectLowerInstrument).setOnClickListener {
@@ -135,44 +127,34 @@ class Piano : AppCompatActivity() {
 
         if (extras != null && intent.hasExtra("compositionId")) {
             compositionId = extras.getInt("compositionId")
+            Log.d("comp id", compositionId.toString())
         }
         compositionViewModel.getCompositionWIthInstruments(compositionId)
             .observe(this) { compositionWithInstruments ->
 
                 if (compositionWithInstruments != null) {
-                    findViewById<TextView>(R.id.symphonyName).text = compositionWithInstruments.composition.name
+                    findViewById<TextView>(R.id.symphonyName).text =
+                        compositionWithInstruments.composition.name
                     progressBar.isVisible = false
                     Log.d("Instruments with measures", compositionWithInstruments.toString())
+                    instrumentsWithMeasures = compositionWithInstruments.instruments
                     if (instrumentsWithMeasures.isEmpty()) {
-                        instrumentViewModel.upsertInstrument(
+                        instrumentViewModel.insertInstrument(
                             Instrument(
                                 position = currentInstrumentPosition,
                                 name = "piano",
                                 compositionId = compositionWithInstruments.composition.id
                             )
-                        )
+                        ).observe(this) {
+                            currentInstrumentId = it.toInt()
+                        }
                     } else {
-                        instrumentsWithMeasures = compositionWithInstruments.instruments
                         staff.drawNotes(instrumentsWithMeasures)
                     }
                 }
             }
 
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-
-
-        noteViewModel = ViewModelProvider(this)[NoteViewModel::class.java]
-        measureViewModel = ViewModelProvider(this)[MeasureViewModel::class.java]
-        instrumentViewModel = ViewModelProvider(this)[InstrumentViewModel::class.java]
-
-
-        measureViewModel.measuresWithNotes.observe(this) { measuresWithNotes ->
-            this.measuresWithNotes = measuresWithNotes
-        }
-
-        measureViewModel.itemId.observe(this) { itemId ->
-            currentMeasureId = itemId.toInt()
-        }
 
         noteViewModel.notes.observe(this) { notes ->
             Log.d("piano notes", notes.toString())
@@ -206,44 +188,43 @@ class Piano : AppCompatActivity() {
             val measureWithNotesCopyMutable: MutableList<InstrumentWithMeasures> = mutableListOf()
 
 
-                if (currentUser != null) {
+            if (currentUser != null) {
 
 
-                    val newMeasuresWithNotesFirebaseAccessible: ArrayList<Any> =
-                        ArrayList()
-                    saveToCloudButton.setOnClickListener {
+                val newMeasuresWithNotesFirebaseAccessible: ArrayList<Any> =
+                    ArrayList()
+                saveToCloudButton.setOnClickListener {
 
-                        for ((indexMeasure, measure) in measuresWithNotes.withIndex()) {
-                            val notes: ArrayList<HashMap<String, Any>> = ArrayList()
-                            val measureHashMap: HashMap<String, Any> = HashMap()
-                            val notesAndMeasureHashMap: HashMap<String, Any> = HashMap()
-                            measureHashMap["clef"] = measure.measure.clef
-                            measureHashMap["instrumentId"] = measure.measure.instrumentId
-                            measureHashMap["id"] = measure.measure.id
-                            measureHashMap["keySignature"] = measure.measure.keySignature
-                            measureHashMap["timeSignatureTop"] = measure.measure.timeSignatureTop
-                            measureHashMap["timeSignatureBottom"] =
-                                measure.measure.timeSignatureBottom
+                    for ((indexMeasure, measure) in measuresWithNotes.withIndex()) {
+                        val notes: ArrayList<HashMap<String, Any>> = ArrayList()
+                        val measureHashMap: HashMap<String, Any> = HashMap()
+                        val notesAndMeasureHashMap: HashMap<String, Any> = HashMap()
+                        measureHashMap["clef"] = measure.measure.clef
+                        measureHashMap["instrumentId"] = measure.measure.instrumentId
+                        measureHashMap["id"] = measure.measure.id
+                        measureHashMap["keySignature"] = measure.measure.keySignature
+                        measureHashMap["timeSignatureTop"] = measure.measure.timeSignatureTop
+                        measureHashMap["timeSignatureBottom"] =
+                            measure.measure.timeSignatureBottom
 
-                            notesAndMeasureHashMap["measure"] = measureHashMap
+                        notesAndMeasureHashMap["measure"] = measureHashMap
 
-                            for ((indexNote, note) in measure.notes.withIndex()) {
-                                val noteHashMap: HashMap<String, Any> = HashMap()
-                                noteHashMap["right"] = note.right
-                                noteHashMap["bottom"] = note.bottom
-                                noteHashMap["dx"] = note.dx
-                                noteHashMap["dy"] = note.dy
-                                noteHashMap["measureId"] = note.measureId
-                                noteHashMap["pitch"] = note.pitch
-                                notes.add(indexNote, noteHashMap)
-                            }
-                            notesAndMeasureHashMap["notes"] = notes
-                            newMeasuresWithNotesFirebaseAccessible.add(
-                                indexMeasure,
-                                notesAndMeasureHashMap
-                            )
+                        for ((indexNote, note) in measure.notes.withIndex()) {
+                            val noteHashMap: HashMap<String, Any> = HashMap()
+                            noteHashMap["right"] = note.right
+                            noteHashMap["bottom"] = note.bottom
+                            noteHashMap["dx"] = note.dx
+                            noteHashMap["dy"] = note.dy
+                            noteHashMap["measureId"] = note.measureId
+                            noteHashMap["pitch"] = note.pitch
+                            notes.add(indexNote, noteHashMap)
                         }
-
+                        notesAndMeasureHashMap["notes"] = notes
+                        newMeasuresWithNotesFirebaseAccessible.add(
+                            indexMeasure,
+                            notesAndMeasureHashMap
+                        )
+                    }
 
 
 //                        db.collection("symphonies").document(compositionId).collection("sheet")
@@ -257,10 +238,10 @@ class Piano : AppCompatActivity() {
 //                                ).show()
 //                            }
 
-                    }
-
-
                 }
+
+
+            }
 
 
         }
