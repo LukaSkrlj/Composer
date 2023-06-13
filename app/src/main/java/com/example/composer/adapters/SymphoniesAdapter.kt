@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.composer.R
 import com.example.composer.activities.Piano
 import com.example.composer.activities.MainActivity
+import com.example.composer.activities.PianoViewOnly
 import com.example.composer.activities.SymphonyActivity
 import com.example.composer.models.MusicModel
 
@@ -47,11 +48,10 @@ class SymphoniesAdapter(
             context.startActivity(
                 Intent(
                     context,
-                    Piano::class.java
+                   if(isSymphonyMine) Piano::class.java else PianoViewOnly::class.java
                 ).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    .putExtra("symphonyID", symphoniesList[position].id)
+                    .putExtra("compositionId", symphoniesList[position].id)
                     .putExtra("isSymphonyMine", isSymphonyMine)
-
             )
         }
 

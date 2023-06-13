@@ -10,12 +10,16 @@ interface CompositionDao {
     @Upsert()
     suspend fun upsertComposition(composition: Composition)
 
+    @Insert()
+    suspend fun insertComposition(composition: Composition): Long
+
     @Delete
     suspend fun deleteComposition(composition: Composition)
 
     @Transaction
     @Query("SELECT * FROM Composition WHERE id = :id")
     fun getCompositionWithInstruments(id: Int): LiveData<CompositionWithInstruments>
+
 
     @Query("SELECT * FROM Composition")
     fun getCompositions(): LiveData<List<Composition>>

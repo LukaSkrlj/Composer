@@ -12,4 +12,13 @@ class InstrumentRepository(private val instrumentDao: InstrumentDao) {
     suspend fun upsertInstrument(instrument: Instrument) {
         instrumentDao.upsertInstrument(instrument)
     }
+
+    suspend fun deleteInstruments() {
+        instrumentDao.deleteInstruments()
+    }
+
+    suspend fun insertInstrument(instrument: Instrument): Long {
+        return instrumentDao.insertInstrument(instrument)
+    }
+
 }

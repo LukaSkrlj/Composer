@@ -70,11 +70,11 @@ class Staff @JvmOverloads constructor(
             for (measure in instrument.measures) {
 
                 //Measure start position
-                var currentMeasureEnd = 0f
+                var currentMeasureEnd = lastNoteMeasureSpacing
                 if (measure.notes.isNotEmpty()) {
+                    Log.d("notes", measure.notes.toString())
                     currentMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
                 }
-
 //            measure(currentMeasureEnd.toInt(), 500)
                 this.layoutParams = ViewGroup.LayoutParams(currentMeasureEnd.toInt(), 500)
                 //Bar line
@@ -107,14 +107,13 @@ class Staff @JvmOverloads constructor(
                 barLinePaint.isFilterBitmap = true
                 canvas.drawLines(lines.flatten().toFloatArray(), barLinePaint)
 
-                Log.d("notes", measure.notes.toString())
-
                 drawTimeSignature(
                     canvas,
                     measure.measure.timeSignatureTop,
                     measure.measure.timeSignatureBottom,
                     dy = instrumentSpacing
                 )
+                
                 val startingOffset = 50f
                 for (note in measure.notes) {
                     val d = resources.getDrawable(
@@ -126,6 +125,7 @@ class Staff @JvmOverloads constructor(
                     d.draw(canvas)
                     canvas.translate(-note.dx - startingOffset, -note.dy)
                 }
+
                 if (measure.notes.isNotEmpty()) {
                     previousMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
                 }
@@ -133,7 +133,6 @@ class Staff @JvmOverloads constructor(
             this.drawEnd(canvas, previousMeasureEnd)
             instrumentSpacing += defaultInstrumentSpacing
         }
-
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -327,42 +326,36 @@ class Staff @JvmOverloads constructor(
                     10 + signatureWidth,
                     (lineSpacing / 2).toInt() + signatureHeight
                 )
-
                 2 -> signatureArray[i]?.setBounds(
                     30,
                     -(lineSpacing + 0.2 * lineThickness).toInt(),
                     30 + signatureWidth,
                     -(lineSpacing + 0.2 * lineThickness).toInt() + signatureHeight
                 )
-
                 3 -> signatureArray[i]?.setBounds(
                     55,
                     (lineSpacing / 1).toInt(),
                     55 + signatureWidth,
                     (lineSpacing / 1).toInt() + signatureHeight
                 )
-
                 4 -> signatureArray[i]?.setBounds(
                     75,
                     -(lineSpacing / 5 + 3 * lineThickness).toInt(),
                     75 + signatureWidth,
                     -(lineSpacing / 5 + 3 * lineThickness).toInt() + signatureHeight
                 )
-
                 5 -> signatureArray[i]?.setBounds(
                     100,
                     (1.6 * lineSpacing).toInt(),
                     100 + signatureWidth,
                     (1.6 * lineSpacing).toInt() + signatureHeight
                 )
-
                 6 -> signatureArray[i]?.setBounds(
                     125,
                     -(lineSpacing / 25).toInt(),
                     125 + signatureWidth,
                     -(lineSpacing / 25).toInt() + signatureHeight
                 )
-
                 7 -> signatureArray[i]?.setBounds(
                     150,
                     (2 * lineSpacing).toInt(),
@@ -416,7 +409,6 @@ class Staff @JvmOverloads constructor(
         d.draw(canvas)
         canvas.translate(-dx, 0f)
 
-        val lowerBound = lines.first().first().toInt() / 2
         resourceId = resources.getIdentifier(
             "time_$lowerNumber", "drawable",
             context.packageName
@@ -430,38 +422,6 @@ class Staff @JvmOverloads constructor(
         d.draw(canvas)
         canvas.translate(-dx, -upperBound.toFloat())
     }
-
-
-//    private fun drawPlayingLine(canvas: Canvas, x: Float) {
-//        playingLinePaint.strokeWidth = 10F
-//
-//
-//        val handler = Handler(Looper.getMainLooper());
-//        val movePlayer0Runnable = object : Runnable {
-//            override fun run() {
-//                canvas.drawLine(
-//                    x,
-//                    0f,
-//                    x,
-//                    canvas.height.toFloat(),
-//                    playingLinePaint
-//                )
-//                xPositionPlayingLine += 0.1f
-//                invalidate(); //will trigger the onDraw
-//                handler.postDelayed(this, 1); //in 5 sec player0 will move again
-//            }
-//        }
-//
-//        if (x.compareTo(canvas.width) == 0 || x.compareTo(canvas.width) == 1) {
-//            isMusicPlaying = false
-//            xPositionPlayingLine = 0f
-//            return
-//        }
-//        movePlayer0Runnable.run()
-//
-//
-//    }
-
 
     private fun playMusic(measuresList: List<MeasureWithNotes>, playButton: ImageButton?) {
         val measureListCopy = measuresList.toMutableList()
@@ -482,7 +442,7 @@ class Staff @JvmOverloads constructor(
                         while (nextNoteDx.compareTo(currentNoteDx) == 0) {
                             val newNoteSoundID =
                                 resources.getIdentifier(
-                                    "raw/${measure.notes[notesIndexNext].key}",
+                                    "raw/${measure.notes[notesIndexNext].pitch}",
                                     null,
                                     context.packageName
                                 )
@@ -506,7 +466,7 @@ class Staff @JvmOverloads constructor(
                     } else {
                         val fileName =
                             resources.getIdentifier(
-                                "raw/${note.key}",
+                                "raw/${note.pitch}",
                                 null,
                                 context.packageName
                             )

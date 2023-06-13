@@ -13,6 +13,10 @@ class MeasureRepository(private val measureDao: MeasureDao) {
         measureDao.upsertMeasure(measure)
     }
 
+    suspend fun insertMeasure(measure: Measure): Long {
+        return measureDao.insertMeasure(measure)
+    }
+
     suspend fun deleteMeasure(measure: Measure) {
         measureDao.deleteMeasure(measure)
     }

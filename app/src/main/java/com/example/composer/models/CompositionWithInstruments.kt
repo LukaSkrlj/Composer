@@ -7,7 +7,8 @@ data class CompositionWithInstruments(
     @Embedded val composition: Composition,
     @Relation(
         parentColumn = "id",
-        entityColumn = "composition_id"
+        entityColumn = "composition_id",
+        entity = Instrument::class
     )
-    val instruments: List<Instrument> = emptyList()
+    val instruments: List<InstrumentWithMeasures> = emptyList()
 )

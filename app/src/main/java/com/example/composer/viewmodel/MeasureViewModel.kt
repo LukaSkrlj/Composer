@@ -3,6 +3,7 @@ package com.example.composer.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.composer.data.ComposerDatabase
 import com.example.composer.models.Measure
@@ -15,6 +16,8 @@ class MeasureViewModel(application: Application) : AndroidViewModel(application)
     val measures: LiveData<List<Measure>>
 
     val measuresWithNotes: LiveData<List<MeasureWithNotes>>
+    private var _itemId = MutableLiveData<Long>()
+    val itemId: LiveData<Long> get() = _itemId
     private val repository: MeasureRepository
 
     init {
@@ -27,6 +30,13 @@ class MeasureViewModel(application: Application) : AndroidViewModel(application)
     fun upsertMeasure(measure: Measure) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.upsertMeasure(measure)
+        }
+    }
+
+    fun insertMeasure(measure: Measure) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val id = repository.insertMeasure(measure)
+            _itemId.postValue(id)
         }
     }
 

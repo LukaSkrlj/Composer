@@ -11,6 +11,9 @@ interface MeasureDao {
     @Upsert
     suspend fun upsertMeasure(measure: Measure)
 
+    @Insert
+    suspend fun insertMeasure(measure: Measure): Long
+
     @Delete
     suspend fun deleteMeasure(measure: Measure)
 
