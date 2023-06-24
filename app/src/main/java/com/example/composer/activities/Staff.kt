@@ -43,8 +43,9 @@ class Staff @JvmOverloads constructor(
     val notesHmap = LinkedHashMap<String, Note>()
     private val linesCount = 5
     private val lineThickness = 2f
-    private val lastNoteMeasureSpacing = 150f
+    private val lastNoteMeasureSpacing = 180f
     private val defaultInstrumentSpacing = 300f
+    private val clefSpacing = 50f
 
     private var barLine =
         arrayOf(
@@ -65,25 +66,27 @@ class Staff @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
-        var instrumentSpacing = 0f
+        var instrumentSpacing = 100f
         for (instrument in instrumentsWithMeasures) {
 
             var previousMeasureEnd = 0f
             for (measure in instrument.measures) {
                 //Measure start position
+                val startingOffset = 80f
                 var currentMeasureEnd = lastNoteMeasureSpacing
                 if (measure.notes.isNotEmpty()) {
                     Log.d("notes", measure.notes.toString())
                     currentMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
                 }
 //            measure(currentMeasureEnd.toInt(), 500)
-                this.layoutParams = ViewGroup.LayoutParams(currentMeasureEnd.toInt(), 500)
+                this.layoutParams =
+                    ViewGroup.LayoutParams((currentMeasureEnd + startingOffset).toInt(), 600)
                 //Bar line
                 canvas.drawLine(
                     barLine[0] + currentMeasureEnd,
-                    barLine[1],
+                    barLine[1] + instrumentSpacing,
                     barLine[2] + currentMeasureEnd,
-                    barLine[3],
+                    barLine[3] + instrumentSpacing,
                     barLinePaint
                 )
 
@@ -107,16 +110,28 @@ class Staff @JvmOverloads constructor(
                 barLinePaint.isAntiAlias = true
                 barLinePaint.isFilterBitmap = true
                 canvas.drawLines(lines.flatten().toFloatArray(), barLinePaint)
-
+                drawKeySignature(canvas, dy = instrumentSpacing)
                 drawTimeSignature(
                     canvas,
                     measure.measure.timeSignatureTop,
                     measure.measure.timeSignatureBottom,
-                    dy = instrumentSpacing
+                    dy = instrumentSpacing,
+                    dx = clefSpacing
                 )
 
-                val startingOffset = 50f
+
                 for (note in measure.notes) {
+                    if (note.pitch.getOrNull(1) == 'b') {
+                        val flat = resources.getDrawable(
+                            R.drawable.accidental_flat,
+                            null
+                        )
+                        flat.setBounds(note.left - 5, note.top + 40, note.right - 65, note.bottom)
+                        canvas.translate(note.dx + startingOffset, note.dy + instrumentSpacing)
+                        flat.draw(canvas)
+                        canvas.translate(-note.dx - startingOffset, -note.dy - instrumentSpacing)
+                    }
+
                     val d = resources.getDrawable(
                         R.drawable.quarter_note,
                         null
@@ -433,6 +448,26 @@ class Staff @JvmOverloads constructor(
         canvas.translate(dx, translationY)
         d.draw(canvas)
         canvas.translate(-dx, -translationY)
+    }
+
+    fun drawKeySignature(canvas: Canvas, dx: Float = 0f, dy: Float = 0f) {
+        var resourceId = resources.getIdentifier(
+            "note_gclef", "drawable",
+            context.packageName
+        )
+        var d = resources.getDrawable(
+            resourceId,
+            null
+        )
+        d.setBounds(
+            0,
+            -lineSpacing.toInt() / 2,
+            2 * lineSpacing.toInt(),
+            (5.5f * lineSpacing).toInt()
+        )
+        canvas.translate(dx, dy)
+        d.draw(canvas)
+        canvas.translate(-dx, -dy)
     }
 
     private fun playMusic(measuresList: List<MeasureWithNotes>, playButton: ImageButton?) {
