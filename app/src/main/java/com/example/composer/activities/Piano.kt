@@ -626,6 +626,9 @@ class Piano : AppCompatActivity() {
         var octave = 0
         outer@ while (octave < 9) {
             inner@ for (key in blackKeys) {
+                if (key == "db" || key == "gb") {
+                    lineCounter++
+                }
                 var newKey = key + octave
                 if (key == "bb") ++octave
                 if (newKey == "db8") break@outer

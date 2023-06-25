@@ -24,6 +24,7 @@ import com.example.composer.constants.THIRTYTWO_NOTE
 import com.example.composer.constants.WHOLE_NOTE
 import com.example.composer.models.InstrumentWithMeasures
 import com.example.composer.models.MeasureWithNotes
+import com.example.composer.models.Note
 import kotlinx.coroutines.*
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -47,8 +48,9 @@ class Staff @JvmOverloads constructor(
     private val soundPool: SoundPool = SoundPool.Builder().setMaxStreams(100).build()
     private val linesCount = 5
     private val lineThickness = 2f
-    private val lastNoteMeasureSpacing = 150f
+    private val lastNoteMeasureSpacing = 180f
     private val defaultInstrumentSpacing = 300f
+    private val clefSpacing = 50f
 
     private var barLine =
         arrayOf(
@@ -68,14 +70,16 @@ class Staff @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
-        var instrumentSpacing = 0f
+        var instrumentSpacing = 100f
         for (instrument in instrumentsWithMeasures) {
 
             var previousMeasureEnd = 0f
             for (measure in instrument.measures) {
                 //Measure start position
+                val startingOffset = 80f
                 var currentMeasureEnd = lastNoteMeasureSpacing
                 if (measure.notes.isNotEmpty()) {
+                    Log.d("notes", measure.notes.toString())
                     currentMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
                 }
 //            measure(currentMeasureEnd.toInt(), 500)
@@ -83,9 +87,9 @@ class Staff @JvmOverloads constructor(
                 //Bar line
                 canvas.drawLine(
                     barLine[0] + currentMeasureEnd,
-                    barLine[1],
+                    barLine[1] + instrumentSpacing,
                     barLine[2] + currentMeasureEnd,
-                    barLine[3],
+                    barLine[3] + instrumentSpacing,
                     barLinePaint
                 )
 
@@ -109,18 +113,20 @@ class Staff @JvmOverloads constructor(
                 barLinePaint.isAntiAlias = true
                 barLinePaint.isFilterBitmap = true
                 canvas.drawLines(lines.flatten().toFloatArray(), barLinePaint)
-
+                drawKeySignature(canvas, dy = instrumentSpacing)
                 drawTimeSignature(
                     canvas,
                     measure.measure.timeSignatureTop,
                     measure.measure.timeSignatureBottom,
-                    dy = instrumentSpacing
+                    dy = instrumentSpacing,
+                    dx = clefSpacing
                 )
 
-                val startingOffset = 50f
+
                 for (note in measure.notes) {
                     var noteAddedHeight = 0
                     var noteAddedWidth = 0
+
                     val d = ResourcesCompat.getDrawable(
                         resources,
                         when (note.length) {
@@ -171,6 +177,24 @@ class Staff @JvmOverloads constructor(
                         },
                         null
                     )
+
+                    if (note.pitch.getOrNull(1) == 'b') {
+                        val flat = ResourcesCompat.getDrawable(
+                            resources,
+                            R.drawable.accidental_flat,
+                            null
+                        )
+                        flat?.setBounds(
+                            note.left - 5,
+                            note.top + 40,
+                            note.right - 65 + noteAddedWidth,
+                            note.bottom + noteAddedHeight
+                        )
+                        canvas.translate(note.dx + startingOffset, note.dy + instrumentSpacing)
+                        flat?.draw(canvas)
+                        canvas.translate(-note.dx - startingOffset, -note.dy - instrumentSpacing)
+                    }
+
                     d?.setBounds(
                         note.left,
                         note.top,
@@ -246,7 +270,6 @@ class Staff @JvmOverloads constructor(
 //                        (notesHeight / linesCount + 3 * lineThickness).toInt(),
 //                        resourceId = resourceId
 //                    )
-//
 //                "accidental_natural", "accidental_sharp" -> notesHmap[note] =
 //                    Note(
 //                        note,
@@ -254,7 +277,6 @@ class Staff @JvmOverloads constructor(
 //                        (notesHeight / (linesCount - 3) + lineThickness).toInt(),
 //                        resourceId
 //                    )
-//
 //                "dynamic_crescendo", "dynamic_diminuendo" -> notesHmap[note] =
 //                    Note(
 //                        note,
@@ -262,7 +284,6 @@ class Staff @JvmOverloads constructor(
 //                        (notesHeight / (linesCount - 3) + lineThickness).toInt(),
 //                        resourceId
 //                    )
-//
 //                "dynamic_forte",
 //                "dynamic_fortepiano",
 //                "dynamic_fortissimo",
@@ -277,7 +298,6 @@ class Staff @JvmOverloads constructor(
 //                        (notesHeight / (linesCount - 3) + lineThickness).toInt(),
 //                        resourceId
 //                    )
-//
 //                "left_repeat", "note_cclef", "right_repeat" -> notesHmap[note] =
 //                    Note(
 //                        note,
@@ -285,7 +305,6 @@ class Staff @JvmOverloads constructor(
 //                        notesHeight,
 //                        resourceId
 //                    )
-//
 //                "note_dot" -> notesHmap[note] =
 //                    Note(
 //                        note,
@@ -293,7 +312,6 @@ class Staff @JvmOverloads constructor(
 //                        (notesHeight / (linesCount + lineThickness)).toInt(),
 //                        resourceId
 //                    )
-//
 //                "note_doublewholenote" -> notesHmap[note] =
 //                    Note(
 //                        note,
@@ -301,7 +319,6 @@ class Staff @JvmOverloads constructor(
 //                        (notesHeight / (linesCount - 2) - 2 * lineThickness).toInt(),
 //                        resourceId
 //                    )
-//
 //                "note_fclef" -> notesHmap[note] =
 //                    Note(
 //                        note,
@@ -309,7 +326,6 @@ class Staff @JvmOverloads constructor(
 //                        (notesHeight / 1.4).toInt(),
 //                        resourceId
 //                    )
-//
 //                "note_gclef",
 //                "note_hundredtwentyeighthnote",
 //                "note_semigarrapatea",
@@ -323,7 +339,6 @@ class Staff @JvmOverloads constructor(
 //                        (notesHeight * 1.5).toInt(),
 //                        resourceId
 //                    )
-//
 //                "note_halfnote", "rest_crochet" -> notesHmap[note] =
 //                    Note(
 //                        note,
@@ -331,7 +346,6 @@ class Staff @JvmOverloads constructor(
 //                        notesHeight,
 //                        resourceId
 //                    )
-//
 //                "note_sixteenthnote", "note_thirtysecondnote", "rest_thirtysecondrest" -> notesHmap[note] =
 //                    Note(
 //                        note,
@@ -339,7 +353,6 @@ class Staff @JvmOverloads constructor(
 //                        notesHeight,
 //                        resourceId
 //                    )
-//
 //                "rest_eighthrest" -> notesHmap[note] =
 //                    Note(
 //                        note,
@@ -347,7 +360,6 @@ class Staff @JvmOverloads constructor(
 //                        notesHeight / 2,
 //                        resourceId
 //                    )
-//
 //                "rest_halfrest" -> notesHmap[note] =
 //                    Note(
 //                        note,
@@ -355,7 +367,6 @@ class Staff @JvmOverloads constructor(
 //                        (notesHeight / (linesCount + lineThickness)).toInt(),
 //                        resourceId
 //                    )
-//
 //                "rest_octwholerest",
 //                "time_0",
 //                "time_1",
@@ -373,7 +384,6 @@ class Staff @JvmOverloads constructor(
 //                        (notesHeight / 2).toInt(),
 //                        resourceId
 //                    )
-//
 //                "rest_quadwholerest", "rest_sixteenthrest" -> notesHmap[note] =
 //                    Note(
 //                        note,
@@ -517,6 +527,26 @@ class Staff @JvmOverloads constructor(
         canvas.translate(dx, translationY)
         d?.draw(canvas)
         canvas.translate(-dx, -translationY)
+    }
+
+    fun drawKeySignature(canvas: Canvas, dx: Float = 0f, dy: Float = 0f) {
+        var resourceId = resources.getIdentifier(
+            "note_gclef", "drawable",
+            context.packageName
+        )
+        var d = resources.getDrawable(
+            resourceId,
+            null
+        )
+        d.setBounds(
+            0,
+            -lineSpacing.toInt() / 2,
+            2 * lineSpacing.toInt(),
+            (5.5f * lineSpacing).toInt()
+        )
+        canvas.translate(dx, dy)
+        d.draw(canvas)
+        canvas.translate(-dx, -dy)
     }
 
     private fun playMusic(measuresList: List<MeasureWithNotes>, playButton: ImageButton?) {
