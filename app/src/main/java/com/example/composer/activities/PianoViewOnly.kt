@@ -175,7 +175,6 @@ class PianoViewOnly : AppCompatActivity() {
                             )
 
                         }
-                        Log.d("tu smo ej", instrumentWithMeasuresMutable.toString())
 
                         staff.drawNotes(instrumentWithMeasuresMutable)
                         progressBar.visibility = View.GONE
