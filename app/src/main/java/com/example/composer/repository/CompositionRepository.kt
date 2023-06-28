@@ -25,7 +25,7 @@ class CompositionRepository(private val compositionDao: CompositionDao) {
         return compositionDao.insertComposition(composition)
     }
 
-    suspend fun deleteComposition(composition: Composition) {
-        compositionDao.deleteComposition(composition)
+    suspend fun deleteComposition(compositionId: Int) {
+        compositionDao.deleteComposition(compositionId)
     }
 }
