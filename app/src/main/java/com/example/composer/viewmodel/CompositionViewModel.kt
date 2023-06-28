@@ -54,9 +54,9 @@ class CompositionViewModel(application: Application) : AndroidViewModel(applicat
         return result
     }
 
-    fun deleteComposition(composition: Composition) {
+    fun deleteComposition(compositionId: Int) {
         viewModelScope.launch(Dispatchers.IO) {
-            repository.deleteComposition(composition)
+            repository.deleteComposition(compositionId)
         }
     }
 }

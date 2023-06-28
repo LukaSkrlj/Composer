@@ -13,8 +13,8 @@ interface CompositionDao {
     @Insert()
     suspend fun insertComposition(composition: Composition): Long
 
-    @Delete
-    suspend fun deleteComposition(composition: Composition)
+    @Query("DELETE FROM Composition WHERE id = :compositionId")
+    suspend fun deleteComposition(compositionId: Int)
 
     @Query("UPDATE Composition SET name= :compositionName, author = :authorName WHERE id = :compositionId")
     suspend fun  updateCompositionInfo(compositionName: String, authorName: String, compositionId: Int)

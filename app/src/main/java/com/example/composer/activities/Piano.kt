@@ -200,7 +200,10 @@ class Piano : AppCompatActivity() {
             }
         }
 
-
+        findViewById<AppCompatButton>(R.id.delete_composition_button).setOnClickListener {
+            compositionViewModel.deleteComposition(compositionId)
+            finish()
+        }
 
         findViewById<ImageButton>(R.id.selectLowerInstrument).setOnClickListener {
             if (instrumentsWithMeasures.any { it.instrument.position == currentInstrumentPosition + 1 }) {
@@ -245,14 +248,15 @@ class Piano : AppCompatActivity() {
                     //fine largest dx
                     if (compositionWithInstruments.instruments.isNotEmpty() && !isStartingDxFound) {
                         for (instrument in compositionWithInstruments.instruments) {
-                            val lastMeasure = instrument.measures.last()
-                            val lastNote = lastMeasure.notes.last()
-                            if (lastNote.dx.compareTo(currentNoteDx) >= 0) {
-                                currentNoteDx = lastNote.dx
-                                currentInstrumentId = lastMeasure.measure.instrumentId
-                                currentMeasureId = lastMeasure.measure.id
+                            if (instrument.measures.isNotEmpty()) {
+                                val lastMeasure = instrument.measures.last()
+                                val lastNote = lastMeasure.notes.last()
+                                if (lastNote.dx.compareTo(currentNoteDx) >= 0) {
+                                    currentNoteDx = lastNote.dx
+                                    currentInstrumentId = lastMeasure.measure.instrumentId
+                                    currentMeasureId = lastMeasure.measure.id
+                                }
                             }
-
                         }
                         isStartingDxFound = true
                     }

@@ -126,13 +126,15 @@ class Staff @JvmOverloads constructor(
                 for (note in measure.notes) {
                     var noteAddedHeight = 0
                     var noteAddedWidth = 0
+                    var noteAdjustDy = 0
 
                     val d = ResourcesCompat.getDrawable(
                         resources,
                         when (note.length) {
                             WHOLE_NOTE -> {
+                                noteAdjustDy = 60
                                 noteAddedHeight = -60
-                                noteAddedWidth = -40
+                                noteAddedWidth = -50
                                 R.drawable.note_wholenote
                             }
 
@@ -160,14 +162,16 @@ class Staff @JvmOverloads constructor(
                             }
 
                             SIXTYFOUR_NOTE -> {
-                                noteAddedWidth = -40
-                                noteAddedHeight = 10
+                                noteAdjustDy = -15
+                                noteAddedWidth = -30
+                                noteAddedHeight = 15
                                 R.drawable.note_sixtyfourth
                             }
 
                             HUNDREDTWENTYEIGHT_NOTE -> {
-                                noteAddedWidth = -40
-                                noteAddedHeight = 15
+                                noteAdjustDy = -25
+                                noteAddedWidth = -30
+                                noteAddedHeight = 25
                                 R.drawable.note_hundredtwentyeighthnote
                             }
 
@@ -197,9 +201,9 @@ class Staff @JvmOverloads constructor(
 
                     d?.setBounds(
                         note.left,
-                        note.top,
+                        note.top + noteAdjustDy,
                         note.right + noteAddedWidth,
-                        note.bottom + noteAddedHeight
+                        note.bottom + noteAddedHeight + noteAdjustDy
                     )
                     canvas.translate(note.dx + startingOffset, note.dy + instrumentSpacing)
                     d?.draw(canvas)
