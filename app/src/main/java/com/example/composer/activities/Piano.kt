@@ -109,12 +109,6 @@ class Piano : AppCompatActivity() {
         measureViewModel = ViewModelProvider(this)[MeasureViewModel::class.java]
         instrumentViewModel = ViewModelProvider(this)[InstrumentViewModel::class.java]
 
-        instrumentViewModel.maxPosition.observe(this) {
-            if (it != null) {
-                maxInstrumentPosition = it
-            }
-
-        }
         slider.setLabelFormatter { "1/4" }
         slider.addOnChangeListener { _, value, _ ->
 
@@ -196,7 +190,10 @@ class Piano : AppCompatActivity() {
                     compositionId = compositionId
                 )
             ).observe(this) {
+                currentNoteDx = 0f
                 currentInstrumentId = it.toInt()
+                maxInstrumentPosition += 1
+                staff.drawPointer(currentNoteDx, currentInstrumentPosition)
             }
         }
 
@@ -211,21 +208,44 @@ class Piano : AppCompatActivity() {
                 currentInstrumentId =
                     instrumentsWithMeasures.find { it.instrument.position == currentInstrumentPosition }?.instrument?.id
                         ?: 0
+
+                currentNoteDx =
+                    instrumentsWithMeasures[currentInstrumentPosition].measures.last().notes.last().dx
+                currentMeasureId =
+                    instrumentsWithMeasures[currentInstrumentPosition].measures.last().measure.id
+                staff.drawPointer(currentNoteDx, currentInstrumentPosition)
             }
         }
 
         findViewById<ImageButton>(R.id.selectUpperInstrument).setOnClickListener {
+            Log.d("tu smo ej", currentInstrumentPosition.toString())
             if (instrumentsWithMeasures.any { it.instrument.position == currentInstrumentPosition - 1 }) {
                 currentInstrumentPosition -= 1
                 currentInstrumentId =
                     instrumentsWithMeasures.find { it.instrument.position == currentInstrumentPosition }?.instrument?.id
                         ?: 0
+                if (instrumentsWithMeasures[currentInstrumentPosition].measures.isNotEmpty()) {
+                    currentNoteDx =
+                        instrumentsWithMeasures[currentInstrumentPosition].measures.last().notes.last().dx
+                    currentMeasureId =
+                        instrumentsWithMeasures[currentInstrumentPosition].measures.last().measure.id
+                    staff.drawPointer(currentNoteDx, currentInstrumentPosition)
+                } else {
+                    staff.drawPointer(0f, currentInstrumentPosition)
+                }
             }
         }
 
         findViewById<ImageButton>(R.id.addNote).setOnClickListener {
             currentNoteDx += horizontalNoteSpacing
+            staff.drawPointer(currentNoteDx, currentInstrumentPosition)
         }
+//        findViewById<ImageButton>(R.id.backNote).setOnClickListener {
+//            if(currentNoteDx.compareTo(100) >= 0) {
+//                currentNoteDx -= horizontalNoteSpacing
+//                staff.drawPointer(currentNoteDx)
+//            }
+//        }
 
 
         if (currentUser == null) {
@@ -241,6 +261,15 @@ class Piano : AppCompatActivity() {
             compositionId = extras.getInt("compositionId")
             Log.d("comp id", compositionId.toString())
         }
+
+        instrumentViewModel.getMaxPosition(compositionId).observe(this) {
+            if (it != null) {
+                maxInstrumentPosition = it
+                Log.d("tu smo ej", maxInstrumentPosition.toString())
+            }
+
+        }
+
         compositionViewModel.getCompositionWIthInstruments(compositionId)
             .observe(this) { compositionWithInstruments ->
                 if (compositionWithInstruments != null) {
@@ -255,9 +284,15 @@ class Piano : AppCompatActivity() {
                                     currentNoteDx = lastNote.dx
                                     currentInstrumentId = lastMeasure.measure.instrumentId
                                     currentMeasureId = lastMeasure.measure.id
+                                    currentInstrumentPosition = instrument.instrument.position
                                 }
+                            } else {
+                                currentInstrumentId = instrument.instrument.id
+                                currentInstrumentPosition = instrument.instrument.position
                             }
                         }
+
+                        staff.drawPointer(currentNoteDx, currentInstrumentPosition)
                         isStartingDxFound = true
                     }
 
@@ -673,7 +708,6 @@ class Piano : AppCompatActivity() {
 
                     val df = DecimalFormat("#.##")
                     if (measuresWithNotes.none { it.measure.instrumentId == currentInstrumentId }) {
-                        Log.d("test 2", "note.toString()")
                         val newMeasure = Measure(
                             timeSignatureTop = 4,
                             timeSignatureBottom = 4,
@@ -684,6 +718,7 @@ class Piano : AppCompatActivity() {
                         val insertObserver = measureViewModel.insertMeasure(
                             newMeasure
                         )
+
                         insertObserver.observe(this) {
                             currentMeasureId = it.toInt()
                             val note = Note(
@@ -748,7 +783,7 @@ class Piano : AppCompatActivity() {
                             return@setOnClickListener
                         }
                     }
-                    Log.d("currentMeasureId", currentMeasureId.toString())
+
                     val note = Note(
                         right = 82,
                         bottom = 82,
@@ -826,6 +861,7 @@ class Piano : AppCompatActivity() {
                     var countSum = 0f
                     var measurePosition = 0
                     val df = DecimalFormat("#.##")
+
                     if (measuresWithNotes.none { it.measure.instrumentId == currentInstrumentId }) {
                         val newMeasure = Measure(
                             timeSignatureTop = 4,
