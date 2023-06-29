@@ -8,8 +8,12 @@ import com.example.composer.models.InstrumentWithMeasures
 class InstrumentRepository(private val instrumentDao: InstrumentDao) {
     val instrumentsWithMeasures: LiveData<List<InstrumentWithMeasures>> =
         instrumentDao.getInstrumentsWithMeasures()
-    val maxPosition = instrumentDao.getMaxPosition()
 
+
+
+    suspend fun getMaxPosition(compositionId: Int): Int{
+        return instrumentDao.getMaxPosition(compositionId)
+    }
     suspend fun upsertInstrument(instrument: Instrument) {
         instrumentDao.upsertInstrument(instrument)
     }

@@ -24,12 +24,10 @@ import com.example.composer.constants.THIRTYTWO_NOTE
 import com.example.composer.constants.WHOLE_NOTE
 import com.example.composer.models.InstrumentWithMeasures
 import com.example.composer.models.MeasureWithNotes
-import com.example.composer.models.Note
 import kotlinx.coroutines.*
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
-
 
 class Staff @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
@@ -43,7 +41,10 @@ class Staff @JvmOverloads constructor(
         }
     }
 
+    private var currentNoteDx = 0f
+    private var currentInstrumentPosition = 0
     private val barLinePaint = Paint()
+    private var hidePointer = false
     private var globalScope: Job? = null
     private val soundPool: SoundPool = SoundPool.Builder().setMaxStreams(100).build()
     private val linesCount = 5
@@ -51,7 +52,8 @@ class Staff @JvmOverloads constructor(
     private val lastNoteMeasureSpacing = 180f
     private val defaultInstrumentSpacing = 300f
     private val clefSpacing = 50f
-
+    private val pointerDrawable =
+        ResourcesCompat.getDrawable(resources, R.drawable.ic_arrow_drop_down, null)
     private var barLine =
         arrayOf(
             lineThickness / 2,
@@ -67,6 +69,7 @@ class Staff @JvmOverloads constructor(
     private var isMusicPlaying: Boolean = false
     private var measuresWithNotes: List<MeasureWithNotes> = listOf()
 
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
@@ -79,9 +82,9 @@ class Staff @JvmOverloads constructor(
                 val startingOffset = 80f
                 var currentMeasureEnd = lastNoteMeasureSpacing
                 if (measure.notes.isNotEmpty()) {
-                    Log.d("notes", measure.notes.toString())
                     currentMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
                 }
+
 //            measure(currentMeasureEnd.toInt(), 500)
 //              this.layoutParams = ViewGroup.LayoutParams(currentMeasureEnd.toInt(), 500)
                 //Bar line
@@ -205,11 +208,12 @@ class Staff @JvmOverloads constructor(
                         note.right + noteAddedWidth,
                         note.bottom + noteAddedHeight + noteAdjustDy
                     )
+
                     canvas.translate(note.dx + startingOffset, note.dy + instrumentSpacing)
                     d?.draw(canvas)
                     canvas.translate(-note.dx - startingOffset, -note.dy - instrumentSpacing)
-                }
 
+                }
 
                 if (measure.notes.isNotEmpty()) {
                     previousMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
@@ -218,6 +222,16 @@ class Staff @JvmOverloads constructor(
             this.drawEnd(canvas, previousMeasureEnd, instrumentSpacing)
             instrumentSpacing += defaultInstrumentSpacing
         }
+
+        if (!hidePointer) {
+            pointerDrawable?.setBounds(
+                currentNoteDx.toInt() + 2 * clefSpacing.toInt(),
+                50 + currentInstrumentPosition * defaultInstrumentSpacing.toInt(),
+                currentNoteDx.toInt() + 2 * clefSpacing.toInt() + 50,
+                100 + currentInstrumentPosition * defaultInstrumentSpacing.toInt()
+            )
+            pointerDrawable?.draw(canvas)
+        }
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -225,20 +239,35 @@ class Staff @JvmOverloads constructor(
         setMeasuredDimension(widthMeasureSpec, heightMeasureSpec)
     }
 
+    fun setHidePointer(hidePointer: Boolean) {
+        this.hidePointer = hidePointer
+    }
+
+    fun drawPointer(currentNoteDx: Float, currentInstrumentPosition: Int) {
+        this.currentNoteDx = currentNoteDx
+        this.currentInstrumentPosition = currentInstrumentPosition
+        invalidate()
+    }
 
     fun drawNotes(instruments: List<InstrumentWithMeasures>) {
         instrumentsWithMeasures = instruments
         measuresWithNotes = instrumentsWithMeasures.map { it.measures }.flatten()
+        var largestNoteDx = 200f
         for (instrument in instrumentsWithMeasures) {
-            for (measure in instrument.measures) {
-                //Measure start position
-                var currentMeasureEnd = lastNoteMeasureSpacing
-                if (measure.notes.isNotEmpty()) {
-                    currentMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
+            if (instrument.measures.isNotEmpty() && instrument.measures.last().notes.isNotEmpty()) {
+                val lastNoteInInstrumentDx = instrument.measures.last().notes.last().dx
+                if (lastNoteInInstrumentDx.compareTo(largestNoteDx) >= 0) {
+                    largestNoteDx = lastNoteInInstrumentDx
                 }
-                this.layoutParams = ViewGroup.LayoutParams(currentMeasureEnd.toInt(), 500)
             }
         }
+
+        this.layoutParams =
+            ViewGroup.LayoutParams(
+                largestNoteDx.toInt() + 250,
+                instrumentsWithMeasures.size * defaultInstrumentSpacing.toInt() + 200
+            )
+
         invalidate()
     }
 

@@ -14,17 +14,23 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
 class InstrumentViewModel(application: Application) : AndroidViewModel(application) {
-    val instrumentsWithMeasures: LiveData<List<InstrumentWithMeasures>>
-    val maxPosition: LiveData<Int>
+    private val instrumentsWithMeasures: LiveData<List<InstrumentWithMeasures>>
     private val repository: InstrumentRepository
 
     init {
         val compositionDao = ComposerDatabase.getDatabase(application).instrumentDao()
         repository = InstrumentRepository(compositionDao)
         instrumentsWithMeasures = repository.instrumentsWithMeasures
-        maxPosition = repository.maxPosition
     }
 
+        fun getMaxPosition(compositionId: Int): LiveData<Int> {
+            val result = MutableLiveData<Int>()
+            viewModelScope.launch(Dispatchers.IO) {
+                val maxPosition = async { repository.getMaxPosition(compositionId) }
+                result.postValue(maxPosition.await())
+            }
+            return result
+        }
     fun deleteInstruments() {
         viewModelScope.launch(Dispatchers.IO) {
             repository.deleteInstruments()
