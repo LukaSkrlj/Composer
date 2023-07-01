@@ -21,12 +21,21 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import com.example.composer.R
+import com.example.composer.constants.EIGHT_NOTE
+import com.example.composer.constants.HALF_NOTE
+import com.example.composer.constants.HUNDREDTWENTYEIGHT_NOTE
+import com.example.composer.constants.QUARTER_NOTE
+import com.example.composer.constants.SIXTEEN_NOTE
+import com.example.composer.constants.SIXTYFOUR_NOTE
+import com.example.composer.constants.THIRTYTWO_NOTE
+import com.example.composer.constants.WHOLE_NOTE
 import com.example.composer.models.*
 import com.example.composer.viewmodel.CompositionViewModel
 import com.example.composer.viewmodel.InstrumentViewModel
 import com.example.composer.viewmodel.MeasureViewModel
 import com.example.composer.viewmodel.NoteViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.material.slider.Slider
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.firestore.FirebaseFirestore
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
@@ -37,9 +46,10 @@ import kotlin.math.roundToInt
 
 class Piano : AppCompatActivity() {
     private val soundPool: SoundPool = SoundPool.Builder().setMaxStreams(10).build()
-    private val whiteKeys = setOf<String>("a", "b", "c", "d", "e", "f", "g")
-    private val blackKeys = setOf<String>("db", "eb", "gb", "ab", "bb")
-    private val octaveColor = arrayOf<String>(
+    private val whiteKeys = setOf("a", "b", "c", "d", "e", "f", "g")
+    private val blackKeys = setOf("db", "eb", "gb", "ab", "bb")
+    private var isStartingDxFound = false
+    private val octaveColor = arrayOf(
         "#999999",
         "#E3BA44",
         "#8ACD42",
@@ -70,38 +80,106 @@ class Piano : AppCompatActivity() {
     private var currentInstrumentId = 0
     private var currentInstrumentPosition = 0
     private var currentMeasureId = 0
+    private var currentNoteLength = 0.25f
 
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_piano)
+        var isOptionsVisible = false
         val slidingPaneLayout = findViewById<SlidingUpPanelLayout>(R.id.sliding_layout)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         val headerCard = findViewById<CardView>(R.id.cardViewHeader)
         val saveToCloudButton = findViewById<AppCompatButton>(R.id.store_to_cloud)
+        val saveToCloudTitle = findViewById<TextView>(R.id.save_to_cloud_title)
         val progressBar = findViewById<ProgressBar>(R.id.progressBar_cyclic)
         val settingsButton = findViewById<ImageButton>(R.id.settings_button)
         val settingsPanel = findViewById<CardView>(R.id.settings_panel)
         var maxInstrumentPosition = currentInstrumentPosition
         val compositionNameInput = findViewById<TextInputLayout>(R.id.compostion_name)
         val authorNameInput = findViewById<TextInputLayout>(R.id.author_name)
+        val scrollContainer = findViewById<HorizontalScrollView>(R.id.scrollContainer)
+        val currentNoteLengthImage = findViewById<ImageView>(R.id.current_note)
+        val optionsContainer = findViewById<ConstraintLayout>(R.id.optionsContainer)
+        val slider = findViewById<Slider>(R.id.slider)
+        val doubleArrow = findViewById<ImageButton>(R.id.new_panel)
         val currentUser = GoogleSignIn.getLastSignedInAccount(this)
         staff = findViewById(R.id.staff)
         noteViewModel = ViewModelProvider(this)[NoteViewModel::class.java]
         measureViewModel = ViewModelProvider(this)[MeasureViewModel::class.java]
         instrumentViewModel = ViewModelProvider(this)[InstrumentViewModel::class.java]
 
-        instrumentViewModel.maxPosition.observe(this) {
-            if (it != null) {
-                maxInstrumentPosition = it
+        slider.setLabelFormatter { "1/4" }
+        slider.addOnChangeListener { _, value, _ ->
+
+            when (value) {
+                0f -> {
+                    slider.setLabelFormatter { "1" }
+                    currentNoteLength = WHOLE_NOTE
+                    currentNoteLengthImage.setImageResource(R.drawable.note_wholenote)
+                }
+
+                16.0f -> {
+                    slider.setLabelFormatter { "1/2" }
+                    currentNoteLength = HALF_NOTE
+                    currentNoteLengthImage.setImageResource(R.drawable.note_halfnote)
+                }
+
+                32.0f -> {
+                    slider.setLabelFormatter { "1/4" }
+                    currentNoteLength = QUARTER_NOTE
+                    currentNoteLengthImage.setImageResource(R.drawable.quarter_note)
+                }
+
+                48.0f -> {
+                    slider.setLabelFormatter { "1/8" }
+                    currentNoteLength = EIGHT_NOTE
+                    currentNoteLengthImage.setImageResource(R.drawable.note_th)
+                }
+
+                64.0f -> {
+                    slider.setLabelFormatter { "1/16" }
+                    currentNoteLength = SIXTEEN_NOTE
+                    currentNoteLengthImage.setImageResource(R.drawable.note_sixteenthnote)
+                }
+
+                80.0f -> {
+                    slider.setLabelFormatter { "1/32" }
+                    currentNoteLength = THIRTYTWO_NOTE
+                    currentNoteLengthImage.setImageResource(R.drawable.note_thirtysecondnote)
+                }
+
+                96.0f -> {
+                    slider.setLabelFormatter { "1/64" }
+                    currentNoteLength = SIXTYFOUR_NOTE
+                    currentNoteLengthImage.setImageResource(R.drawable.note_sixtyfourth)
+                }
+
+                112.0f -> {
+                    slider.setLabelFormatter { "1/128" }
+                    currentNoteLength = HUNDREDTWENTYEIGHT_NOTE
+                    currentNoteLengthImage.setImageResource(R.drawable.note_hundredtwentyeighthnote)
+                }
             }
 
         }
-
         var compositionId = 0
         val extras = intent.extras
-
         // Views
+        findViewById<ImageButton>(R.id.new_panel).setOnClickListener {
+            isOptionsVisible = !isOptionsVisible
+            if (isOptionsVisible) {
+                scrollContainer.visibility = View.INVISIBLE
+                optionsContainer.visibility = View.VISIBLE
+                doubleArrow.setImageResource(R.drawable.ic_double_arrow_left)
+
+            } else {
+                scrollContainer.visibility = View.VISIBLE
+                optionsContainer.visibility = View.INVISIBLE
+                doubleArrow.setImageResource(R.drawable.ic_double_arrow_right)
+            }
+        }
+
         staff = findViewById(R.id.staff)
         findViewById<ImageButton>(R.id.addInstrument).setOnClickListener {
             currentInstrumentPosition = maxInstrumentPosition + 1
@@ -112,11 +190,17 @@ class Piano : AppCompatActivity() {
                     compositionId = compositionId
                 )
             ).observe(this) {
+                currentNoteDx = 0f
                 currentInstrumentId = it.toInt()
+                maxInstrumentPosition += 1
+                staff.drawPointer(currentNoteDx, currentInstrumentPosition)
             }
         }
 
-
+        findViewById<AppCompatButton>(R.id.delete_composition_button).setOnClickListener {
+            compositionViewModel.deleteComposition(compositionId)
+            finish()
+        }
 
         findViewById<ImageButton>(R.id.selectLowerInstrument).setOnClickListener {
             if (instrumentsWithMeasures.any { it.instrument.position == currentInstrumentPosition + 1 }) {
@@ -124,25 +208,49 @@ class Piano : AppCompatActivity() {
                 currentInstrumentId =
                     instrumentsWithMeasures.find { it.instrument.position == currentInstrumentPosition }?.instrument?.id
                         ?: 0
+
+                currentNoteDx =
+                    instrumentsWithMeasures[currentInstrumentPosition].measures.last().notes.last().dx
+                currentMeasureId =
+                    instrumentsWithMeasures[currentInstrumentPosition].measures.last().measure.id
+                staff.drawPointer(currentNoteDx, currentInstrumentPosition)
             }
         }
 
         findViewById<ImageButton>(R.id.selectUpperInstrument).setOnClickListener {
+            Log.d("tu smo ej", currentInstrumentPosition.toString())
             if (instrumentsWithMeasures.any { it.instrument.position == currentInstrumentPosition - 1 }) {
                 currentInstrumentPosition -= 1
                 currentInstrumentId =
                     instrumentsWithMeasures.find { it.instrument.position == currentInstrumentPosition }?.instrument?.id
                         ?: 0
+                if (instrumentsWithMeasures[currentInstrumentPosition].measures.isNotEmpty()) {
+                    currentNoteDx =
+                        instrumentsWithMeasures[currentInstrumentPosition].measures.last().notes.last().dx
+                    currentMeasureId =
+                        instrumentsWithMeasures[currentInstrumentPosition].measures.last().measure.id
+                    staff.drawPointer(currentNoteDx, currentInstrumentPosition)
+                } else {
+                    staff.drawPointer(0f, currentInstrumentPosition)
+                }
             }
         }
 
         findViewById<ImageButton>(R.id.addNote).setOnClickListener {
             currentNoteDx += horizontalNoteSpacing
+            staff.drawPointer(currentNoteDx, currentInstrumentPosition)
         }
+//        findViewById<ImageButton>(R.id.backNote).setOnClickListener {
+//            if(currentNoteDx.compareTo(100) >= 0) {
+//                currentNoteDx -= horizontalNoteSpacing
+//                staff.drawPointer(currentNoteDx)
+//            }
+//        }
 
 
         if (currentUser == null) {
             saveToCloudButton.isVisible = false
+            saveToCloudTitle.isVisible = false
         }
 
 
@@ -153,19 +261,39 @@ class Piano : AppCompatActivity() {
             compositionId = extras.getInt("compositionId")
             Log.d("comp id", compositionId.toString())
         }
+
+        instrumentViewModel.getMaxPosition(compositionId).observe(this) {
+            if (it != null) {
+                maxInstrumentPosition = it
+                Log.d("tu smo ej", maxInstrumentPosition.toString())
+            }
+
+        }
+
         compositionViewModel.getCompositionWIthInstruments(compositionId)
             .observe(this) { compositionWithInstruments ->
                 if (compositionWithInstruments != null) {
 
                     //fine largest dx
-                    if (compositionWithInstruments.instruments.isNotEmpty()) {
-                        for (measure in compositionWithInstruments.instruments[0].measures) {
-                            for (note in measure.notes) {
-                                if (note.dx.compareTo(currentNoteDx) >= 0) {
-                                    currentNoteDx = note.dx
+                    if (compositionWithInstruments.instruments.isNotEmpty() && !isStartingDxFound) {
+                        for (instrument in compositionWithInstruments.instruments) {
+                            if (instrument.measures.isNotEmpty()) {
+                                val lastMeasure = instrument.measures.last()
+                                val lastNote = lastMeasure.notes.last()
+                                if (lastNote.dx.compareTo(currentNoteDx) >= 0) {
+                                    currentNoteDx = lastNote.dx
+                                    currentInstrumentId = lastMeasure.measure.instrumentId
+                                    currentMeasureId = lastMeasure.measure.id
+                                    currentInstrumentPosition = instrument.instrument.position
                                 }
+                            } else {
+                                currentInstrumentId = instrument.instrument.id
+                                currentInstrumentPosition = instrument.instrument.position
                             }
                         }
+
+                        staff.drawPointer(currentNoteDx, currentInstrumentPosition)
+                        isStartingDxFound = true
                     }
 
 
@@ -236,16 +364,16 @@ class Piano : AppCompatActivity() {
                         ArrayList()
                     val instrumentHashMap: HashMap<String, Any> = HashMap()
                     val instrumentAndMeasuresHashMap: HashMap<String, Any> = HashMap()
-                    val notesAndMeasuresArray: ArrayList<Any> = ArrayList<Any>()
+                    val notesAndMeasuresArray: ArrayList<Any> = ArrayList()
 
-                    for ((elementIndex, element) in instrumentsWithMeasures.withIndex()) {
+                    for (element in instrumentsWithMeasures) {
 
                         instrumentHashMap["compositionId"] = element.instrument.compositionId
                         instrumentHashMap["id"] = element.instrument.id
                         instrumentHashMap["name"] = element.instrument.name
                         instrumentHashMap["position"] = element.instrument.position
 
-                        for ((measureWithNotesIndex, measureWithNotes) in element.measures.withIndex()) {
+                        for (measureWithNotes in element.measures) {
 
 
                             val notes: ArrayList<HashMap<String, Any>> = ArrayList()
@@ -261,7 +389,7 @@ class Piano : AppCompatActivity() {
                                 measureWithNotes.measure.timeSignatureBottom
 
 
-                            for ((indexNote, note) in measureWithNotes.notes.withIndex()) {
+                            for (note in measureWithNotes.notes) {
                                 val noteHashMap: HashMap<String, Any> = HashMap()
                                 noteHashMap["right"] = note.right
                                 noteHashMap["left"] = note.left
@@ -290,8 +418,6 @@ class Piano : AppCompatActivity() {
                         instrumentAndMeasuresHashMap["instrument"] = instrumentHashMap
                         instrumentWithMeasuresFirebaseAccessible.add(instrumentAndMeasuresHashMap)
                     }
-
-
 
                     db.collection("symphonies").add(
                         hashMapOf(
@@ -377,7 +503,7 @@ class Piano : AppCompatActivity() {
             systemUiVisibility =
                 View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_FULLSCREEN
         }
-        actionBar?.hide()
+        supportActionBar?.hide()
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -567,7 +693,7 @@ class Piano : AppCompatActivity() {
                 constraintSet.constrainHeight(blackPianoKey.id, blackKeyHeight)
                 constraintSet.constrainWidth(blackPianoKey.id, blacKeyWidth)
 
-                var dy = initialNotePosition - (lineSpacing / 2) * lineCounter
+                val dy = initialNotePosition - (lineSpacing / 2) * lineCounter
 
                 this.connectBlackKey(constraintSet, newKey, blackPianoKey.id)
 
@@ -582,7 +708,6 @@ class Piano : AppCompatActivity() {
 
                     val df = DecimalFormat("#.##")
                     if (measuresWithNotes.none { it.measure.instrumentId == currentInstrumentId }) {
-                        Log.d("test 2", "note.toString()")
                         val newMeasure = Measure(
                             timeSignatureTop = 4,
                             timeSignatureBottom = 4,
@@ -590,9 +715,10 @@ class Piano : AppCompatActivity() {
                             instrumentId = currentInstrumentId,
                             clef = "treble"
                         )
-                        var insertObserver = measureViewModel.insertMeasure(
+                        val insertObserver = measureViewModel.insertMeasure(
                             newMeasure
                         )
+
                         insertObserver.observe(this) {
                             currentMeasureId = it.toInt()
                             val note = Note(
@@ -601,7 +727,8 @@ class Piano : AppCompatActivity() {
                                 dx = currentNoteDx,
                                 dy = dy,
                                 measureId = currentMeasureId,
-                                pitch = newKey
+                                pitch = newKey,
+                                length = currentNoteLength
                             )
 
                             noteViewModel.addNote(note)
@@ -634,7 +761,7 @@ class Piano : AppCompatActivity() {
                                 clef = "treble",
                                 position = measurePosition
                             )
-                            var insertObserver = measureViewModel.insertMeasure(
+                            val insertObserver = measureViewModel.insertMeasure(
                                 newMeasure
                             )
                             insertObserver.observe(this) {
@@ -645,7 +772,8 @@ class Piano : AppCompatActivity() {
                                     dx = currentNoteDx,
                                     dy = dy,
                                     measureId = currentMeasureId,
-                                    pitch = newKey
+                                    pitch = newKey,
+                                    length = currentNoteLength
                                 )
 
                                 noteViewModel.addNote(note)
@@ -655,14 +783,15 @@ class Piano : AppCompatActivity() {
                             return@setOnClickListener
                         }
                     }
-                    Log.d("currentMeasureId", currentMeasureId.toString())
+
                     val note = Note(
                         right = 82,
                         bottom = 82,
                         dx = currentNoteDx,
                         dy = dy,
                         measureId = currentMeasureId,
-                        pitch = newKey
+                        pitch = newKey,
+                        length = currentNoteLength
                     )
 
                     noteViewModel.addNote(note)
@@ -725,16 +854,15 @@ class Piano : AppCompatActivity() {
                 whitePianoKey.setTextColor(Color.parseColor(octaveColor[octave]))
                 whitePianoKey.setBackgroundResource(R.drawable.white_piano_border)
                 whitePianoKey.stateListAnimator = null
-                var dy = initialNotePosition - (lineSpacing / 2) * lineCounter
+                val dy = initialNotePosition - (lineSpacing / 2) * lineCounter
 
                 whitePianoKey.setOnClickListener {
                     this.soundPool.play(loadedFile, 1f, 1f, 1, 0, speed)
                     var countSum = 0f
                     var measurePosition = 0
-
                     val df = DecimalFormat("#.##")
+
                     if (measuresWithNotes.none { it.measure.instrumentId == currentInstrumentId }) {
-                        Log.d("test 2", "note.toString()")
                         val newMeasure = Measure(
                             timeSignatureTop = 4,
                             timeSignatureBottom = 4,
@@ -742,7 +870,7 @@ class Piano : AppCompatActivity() {
                             instrumentId = currentInstrumentId,
                             clef = "treble"
                         )
-                        var insertObserver = measureViewModel.insertMeasure(
+                        val insertObserver = measureViewModel.insertMeasure(
                             newMeasure
                         )
                         insertObserver.observe(this) {
@@ -753,7 +881,8 @@ class Piano : AppCompatActivity() {
                                 dx = currentNoteDx,
                                 dy = dy,
                                 measureId = currentMeasureId,
-                                pitch = newKey
+                                pitch = newKey,
+                                length = currentNoteLength
                             )
 
                             noteViewModel.addNote(note)
@@ -786,7 +915,7 @@ class Piano : AppCompatActivity() {
                                 clef = "treble",
                                 position = measurePosition
                             )
-                            var insertObserver = measureViewModel.insertMeasure(
+                            val insertObserver = measureViewModel.insertMeasure(
                                 newMeasure
                             )
                             insertObserver.observe(this) {
@@ -797,7 +926,8 @@ class Piano : AppCompatActivity() {
                                     dx = currentNoteDx,
                                     dy = dy,
                                     measureId = currentMeasureId,
-                                    pitch = newKey
+                                    pitch = newKey,
+                                    length = currentNoteLength
                                 )
 
                                 noteViewModel.addNote(note)
@@ -807,14 +937,15 @@ class Piano : AppCompatActivity() {
                             return@setOnClickListener
                         }
                     }
-                    Log.d("currentMeasureId", currentMeasureId.toString())
+
                     val note = Note(
                         right = 82,
                         bottom = 82,
                         dx = currentNoteDx,
                         dy = dy,
                         measureId = currentMeasureId,
-                        pitch = newKey
+                        pitch = newKey,
+                        length = currentNoteLength
                     )
 
                     noteViewModel.addNote(note)

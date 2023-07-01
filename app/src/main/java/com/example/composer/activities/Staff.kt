@@ -14,6 +14,14 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import androidx.core.content.res.ResourcesCompat
 import com.example.composer.R
+import com.example.composer.constants.EIGHT_NOTE
+import com.example.composer.constants.HALF_NOTE
+import com.example.composer.constants.HUNDREDTWENTYEIGHT_NOTE
+import com.example.composer.constants.QUARTER_NOTE
+import com.example.composer.constants.SIXTEEN_NOTE
+import com.example.composer.constants.SIXTYFOUR_NOTE
+import com.example.composer.constants.THIRTYTWO_NOTE
+import com.example.composer.constants.WHOLE_NOTE
 import com.example.composer.models.InstrumentWithMeasures
 import com.example.composer.models.MeasureWithNotes
 import com.example.composer.models.Note
@@ -22,7 +30,6 @@ import kotlinx.coroutines.*
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
-
 
 class Staff @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
@@ -36,18 +43,19 @@ class Staff @JvmOverloads constructor(
         }
     }
 
+    private var currentNoteDx = 0f
+    private var currentInstrumentPosition = 0
     private val barLinePaint = Paint()
-    private val playingLinePaint = Paint()
-    private var xPositionPlayingLine = 0f
+    private var hidePointer = false
     private var globalScope: Job? = null
     private val soundPool: SoundPool = SoundPool.Builder().setMaxStreams(100).build()
-    val notesHmap = LinkedHashMap<String, Note>()
     private val linesCount = 5
     private val lineThickness = 2f
     private val lastNoteMeasureSpacing = 180f
     private val defaultInstrumentSpacing = 300f
     private val clefSpacing = 50f
-
+    private val pointerDrawable =
+        ResourcesCompat.getDrawable(resources, R.drawable.ic_arrow_drop_down, null)
     private var barLine =
         arrayOf(
             lineThickness / 2,
@@ -62,7 +70,7 @@ class Staff @JvmOverloads constructor(
 
     private var isMusicPlaying: Boolean = false
     private var measuresWithNotes: List<MeasureWithNotes> = listOf()
-    private var notes: List<Note> = emptyList()
+
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -76,12 +84,11 @@ class Staff @JvmOverloads constructor(
                 val startingOffset = 80f
                 var currentMeasureEnd = lastNoteMeasureSpacing
                 if (measure.notes.isNotEmpty()) {
-                    Log.d("notes", measure.notes.toString())
                     currentMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
                 }
+
 //            measure(currentMeasureEnd.toInt(), 500)
-                this.layoutParams =
-                    ViewGroup.LayoutParams((currentMeasureEnd + startingOffset).toInt(), 600)
+//              this.layoutParams = ViewGroup.LayoutParams(currentMeasureEnd.toInt(), 500)
                 //Bar line
                 canvas.drawLine(
                     barLine[0] + currentMeasureEnd,
@@ -122,27 +129,93 @@ class Staff @JvmOverloads constructor(
 
 
                 for (note in measure.notes) {
+                    var noteAddedHeight = 0
+                    var noteAddedWidth = 0
+                    var noteAdjustDy = 0
+
+                    val d = ResourcesCompat.getDrawable(
+                        resources,
+                        when (note.length) {
+                            WHOLE_NOTE -> {
+                                noteAdjustDy = 60
+                                noteAddedHeight = -60
+                                noteAddedWidth = -50
+                                R.drawable.note_wholenote
+                            }
+
+                            HALF_NOTE -> {
+                                noteAddedWidth = -50
+                                R.drawable.note_halfnote
+                            }
+
+                            QUARTER_NOTE -> {
+                                R.drawable.quarter_note
+                            }
+
+                            EIGHT_NOTE -> {
+                                R.drawable.note_th
+                            }
+
+                            SIXTEEN_NOTE -> {
+                                noteAddedWidth = -30
+                                R.drawable.note_sixteenthnote
+                            }
+
+                            THIRTYTWO_NOTE -> {
+                                noteAddedWidth = -30
+                                R.drawable.note_thirtysecondnote
+                            }
+
+                            SIXTYFOUR_NOTE -> {
+                                noteAdjustDy = -15
+                                noteAddedWidth = -30
+                                noteAddedHeight = 15
+                                R.drawable.note_sixtyfourth
+                            }
+
+                            HUNDREDTWENTYEIGHT_NOTE -> {
+                                noteAdjustDy = -25
+                                noteAddedWidth = -30
+                                noteAddedHeight = 25
+                                R.drawable.note_hundredtwentyeighthnote
+                            }
+
+                            else -> {
+                                R.drawable.quarter_note
+                            }
+                        },
+                        null
+                    )
+
                     if (note.pitch.getOrNull(1) == 'b') {
-                        val flat = resources.getDrawable(
+                        val flat = ResourcesCompat.getDrawable(
+                            resources,
                             R.drawable.accidental_flat,
                             null
                         )
-                        flat.setBounds(note.left - 5, note.top + 40, note.right - 65, note.bottom)
+                        flat?.setBounds(
+                            note.left - 5,
+                            note.top + 40,
+                            note.right - 65 + noteAddedWidth,
+                            note.bottom + noteAddedHeight
+                        )
                         canvas.translate(note.dx + startingOffset, note.dy + instrumentSpacing)
-                        flat.draw(canvas)
+                        flat?.draw(canvas)
                         canvas.translate(-note.dx - startingOffset, -note.dy - instrumentSpacing)
                     }
 
-                    val d = resources.getDrawable(
-                        R.drawable.quarter_note,
-                        null
+                    d?.setBounds(
+                        note.left,
+                        note.top + noteAdjustDy,
+                        note.right + noteAddedWidth,
+                        note.bottom + noteAddedHeight + noteAdjustDy
                     )
-                    d.setBounds(note.left, note.top, note.right, note.bottom)
-                    canvas.translate(note.dx + startingOffset, note.dy + instrumentSpacing)
-                    d.draw(canvas)
-                    canvas.translate(-note.dx - startingOffset, -note.dy - instrumentSpacing)
-                }
 
+                    canvas.translate(note.dx + startingOffset, note.dy + instrumentSpacing)
+                    d?.draw(canvas)
+                    canvas.translate(-note.dx - startingOffset, -note.dy - instrumentSpacing)
+
+                }
 
                 if (measure.notes.isNotEmpty()) {
                     previousMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
@@ -151,7 +224,16 @@ class Staff @JvmOverloads constructor(
             this.drawEnd(canvas, previousMeasureEnd, instrumentSpacing)
             instrumentSpacing += defaultInstrumentSpacing
         }
-        Log.d("Tu?", "measure.notes.toString()")
+
+        if (!hidePointer) {
+            pointerDrawable?.setBounds(
+                currentNoteDx.toInt() + 2 * clefSpacing.toInt(),
+                50 + currentInstrumentPosition * defaultInstrumentSpacing.toInt(),
+                currentNoteDx.toInt() + 2 * clefSpacing.toInt() + 50,
+                100 + currentInstrumentPosition * defaultInstrumentSpacing.toInt()
+            )
+            pointerDrawable?.draw(canvas)
+        }
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -159,11 +241,35 @@ class Staff @JvmOverloads constructor(
         setMeasuredDimension(widthMeasureSpec, heightMeasureSpec)
     }
 
+    fun setHidePointer(hidePointer: Boolean) {
+        this.hidePointer = hidePointer
+    }
+
+    fun drawPointer(currentNoteDx: Float, currentInstrumentPosition: Int) {
+        this.currentNoteDx = currentNoteDx
+        this.currentInstrumentPosition = currentInstrumentPosition
+        invalidate()
+    }
 
     fun drawNotes(instruments: List<InstrumentWithMeasures>) {
         instrumentsWithMeasures = instruments
         measuresWithNotes = instrumentsWithMeasures.map { it.measures }.flatten()
-        Log.d("AAAAAAAAAAAAAAAAAAAAAAAAA", instrumentsWithMeasures.joinToString(" "))
+        var largestNoteDx = 200f
+        for (instrument in instrumentsWithMeasures) {
+            if (instrument.measures.isNotEmpty() && instrument.measures.last().notes.isNotEmpty()) {
+                val lastNoteInInstrumentDx = instrument.measures.last().notes.last().dx
+                if (lastNoteInInstrumentDx.compareTo(largestNoteDx) >= 0) {
+                    largestNoteDx = lastNoteInInstrumentDx
+                }
+            }
+        }
+
+        this.layoutParams =
+            ViewGroup.LayoutParams(
+                largestNoteDx.toInt() + 250,
+                instrumentsWithMeasures.size * defaultInstrumentSpacing.toInt() + 200
+            )
+
         invalidate()
     }
 
@@ -181,11 +287,16 @@ class Staff @JvmOverloads constructor(
 //    private fun setNotesSize() {
 //        val notesHeight = lines.last().last().toInt()
 //
-//        notesDrawable.forEach { note ->
-//            val resourceId = resources.getIdentifier(
-//                note, "drawable",
-//                context.packageName
-//            )
+//        instrumentsWithMeasures.forEach { instrument ->
+//            instrument.measures.forEach { measure ->
+//                measure.notes.forEach { note ->
+//
+//                    val resourceId = resources.getIdentifier(
+//                        note., "drawable",
+//                        context.packageName
+//                    )
+//                }
+//            }
 //
 //            when (note) {
 //                "accidental_doublesharp", "note_clef", "note_semibreve", "rest_doublewholerest" -> notesHmap[note] =
@@ -327,11 +438,11 @@ class Staff @JvmOverloads constructor(
 
     private fun drawKeySignatures(numberOfSignatures: Int) {
         val notesHeight = lines.last().last().toInt()
-        val signatureArray: ArrayList<Drawable?> = ArrayList<Drawable?>(numberOfSignatures)
+        val signatureArray: ArrayList<Drawable?> = ArrayList(numberOfSignatures)
         val signatureHeight = (lineSpacing * 2).toInt()
         val signatureWidth = (notesHeight / 4)
 
-        for (i in 0..numberOfSignatures - 1) {
+        for (i in 0 until numberOfSignatures) {
             val signature = ResourcesCompat.getDrawable(
                 resources,
                 R.drawable.accidental_flat,
@@ -392,7 +503,7 @@ class Staff @JvmOverloads constructor(
         }
     }
 
-    fun drawEnd(canvas: Canvas, dx: Float, dy: Float) {
+    private fun drawEnd(canvas: Canvas, dx: Float, dy: Float) {
         canvas.drawLine(
             dx + barLine[0] - lineSpacing,
             barLine[1] + dy,
@@ -414,7 +525,7 @@ class Staff @JvmOverloads constructor(
         )
     }
 
-    fun drawTimeSignature(
+    private fun drawTimeSignature(
         canvas: Canvas,
         upperNumber: Int,
         lowerNumber: Int,
@@ -426,28 +537,30 @@ class Staff @JvmOverloads constructor(
             "time_$upperNumber", "drawable",
             context.packageName
         )
-        var d = resources.getDrawable(
+        var d = ResourcesCompat.getDrawable(
+            resources,
             resourceId,
             null
         )
-        d.setBounds(0, 0, middle, middle)
+        d?.setBounds(0, 0, middle, middle)
         canvas.translate(dx, dy)
-        d.draw(canvas)
+        d?.draw(canvas)
         canvas.translate(-dx, -dy)
 
         resourceId = resources.getIdentifier(
             "time_$lowerNumber", "drawable",
             context.packageName
         )
-        d = resources.getDrawable(
+        d = ResourcesCompat.getDrawable(
+            resources,
             resourceId,
             null
         )
-        d.setBounds(0, 0, middle, middle)
+        d?.setBounds(0, 0, middle, middle)
 
         val translationY = 2 * lineSpacing + dy
         canvas.translate(dx, translationY)
-        d.draw(canvas)
+        d?.draw(canvas)
         canvas.translate(-dx, -translationY)
     }
 
@@ -475,17 +588,13 @@ class Staff @JvmOverloads constructor(
         val speed = 60f
         val measureListCopy = measuresList.toMutableList()
         val sortedNotes = measureListCopy.map { it.notes }.flatten()
-        globalScope = GlobalScope.launch(Dispatchers.IO) {
+        globalScope = GlobalScope.launch(Dispatchers.Default) {
             var previousNoteLength = 0f
             var noteSounds = mutableListOf<SoundLoader>()
             for (unique in sortedNotes.sortedBy { it.length }.distinctBy { it.dx }
                 .sortedBy { it.dx }) {
-                Log.d("sortedNotes", sortedNotes.sortedBy { it.length }.distinctBy { it.dx }
-                    .sortedBy { it.dx }.toString())
-
                 for (note in sortedNotes.sortedBy { it.dx }) {
                     if (note.dx == unique.dx) {
-                        Log.d("sortedNotes", note.toString())
                         val noteLength = 4 * note.length * (60.0f / speed) * 1000.0f
                         val newNoteSoundID =
                             resources.getIdentifier(
@@ -519,22 +628,24 @@ class Staff @JvmOverloads constructor(
                     }, sound.noteLength)
                 }, sound.previousNoteLength)
             }
-
-            playButton?.setImageResource(R.drawable.ic_play)
-            isMusicPlaying = false
-            return@launch
+            //wait to finish playing then change icon
+            Handler(Looper.getMainLooper()).postDelayed({
+                playButton?.setImageResource(R.drawable.ic_play)
+                isMusicPlaying = false
+            }, previousNoteLength.toLong())
         }
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
+        soundPool.release()
         globalScope?.cancel()
     }
 
     private suspend fun loadSound(soundPool: SoundPool, soundId: Int): Int {
         return suspendCoroutine { continuation ->
             val soundLoadedListener =
-                SoundPool.OnLoadCompleteListener { pool, sampleId, status ->
+                SoundPool.OnLoadCompleteListener { _, sampleId, status ->
                     if (status == 0) {
                         continuation.resume(sampleId)
                     } else {

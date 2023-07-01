@@ -42,6 +42,7 @@ class PianoViewOnly : AppCompatActivity() {
         findViewById<ImageView>(R.id.back).setOnClickListener {
             finish()
         }
+        staff.setHidePointer(true)
 
 
         if (currentUser == null) {
@@ -175,7 +176,6 @@ class PianoViewOnly : AppCompatActivity() {
                             )
 
                         }
-                        Log.d("tu smo ej", instrumentWithMeasuresMutable.toString())
 
                         staff.drawNotes(instrumentWithMeasuresMutable)
                         progressBar.visibility = View.GONE
