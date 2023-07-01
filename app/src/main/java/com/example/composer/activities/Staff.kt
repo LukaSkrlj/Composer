@@ -17,6 +17,7 @@ import com.example.composer.R
 import com.example.composer.models.InstrumentWithMeasures
 import com.example.composer.models.MeasureWithNotes
 import com.example.composer.models.Note
+import com.example.composer.models.SoundLoader
 import kotlinx.coroutines.*
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -471,10 +472,12 @@ class Staff @JvmOverloads constructor(
     }
 
     private fun playMusic(measuresList: List<MeasureWithNotes>, playButton: ImageButton?) {
+        val speed = 60f
         val measureListCopy = measuresList.toMutableList()
         val sortedNotes = measureListCopy.map { it.notes }.flatten()
         globalScope = GlobalScope.launch(Dispatchers.IO) {
             var previousNoteLength = 0f
+            var noteSounds = mutableListOf<SoundLoader>()
             for (unique in sortedNotes.sortedBy { it.length }.distinctBy { it.dx }
                 .sortedBy { it.dx }) {
                 Log.d("sortedNotes", sortedNotes.sortedBy { it.length }.distinctBy { it.dx }
@@ -483,83 +486,44 @@ class Staff @JvmOverloads constructor(
                 for (note in sortedNotes.sortedBy { it.dx }) {
                     if (note.dx == unique.dx) {
                         Log.d("sortedNotes", note.toString())
-                        val noteLength = 4 * note.length * (60.0f / 100.0f) * 1000.0f
-
+                        val noteLength = 4 * note.length * (60.0f / speed) * 1000.0f
                         val newNoteSoundID =
                             resources.getIdentifier(
                                 "raw/${note.pitch}",
                                 null,
                                 context.packageName
                             )
-                        val newNoteSound =
-                            withContext(Dispatchers.Default) {
-                                loadSound(
-                                    soundPool,
-                                    newNoteSoundID
-                                )
-                            }
-                        Handler(Looper.getMainLooper()).postDelayed({
-                            val streamId = soundPool.play(newNoteSound, 1f, 1f, 1, 0, 1f)
-                            Log.d("streamId", streamId.toString())
-                            Handler(Looper.getMainLooper()).postDelayed({
-                                soundPool.stop(streamId)
-                            }, noteLength.toLong())
-                        }, previousNoteLength.toLong())
+                        noteSounds.add(
+                            SoundLoader(
+                                withContext(Dispatchers.Default) {
+                                    loadSound(
+                                        soundPool,
+                                        newNoteSoundID
+                                    )
+                                },
+                                noteLength.toLong(),
+                                previousNoteLength.toLong()
+                            )
+                        )
                     }
                 }
-                previousNoteLength += unique.length * (60.0f / 100.0f) * 1000.0f
+                previousNoteLength += unique.length * (60.0f / speed) * 1000.0f
+            }
 
+            for (sound in noteSounds) {
+                Handler(Looper.getMainLooper()).postDelayed({
+                    val streamId = soundPool.play(sound.newNoteSoundID, 1f, 1f, 1, 0, 1f)
 
-//                    if (noteIndex + 1 < measure.notes.size) {
-//                        var notesIndexNext = noteIndex + 1
-//                        var nextNoteDx = measure.notes[notesIndexNext].dx
-//
-//                        //while notes have same dx load them to array
-//                        while (nextNoteDx.compareTo(currentNoteDx) == 0) {
-//                            val newNoteSoundID =
-//                                resources.getIdentifier(
-//                                    "raw/${measure.notes[notesIndexNext].pitch}",
-//                                    null,
-//                                    context.packageName
-//                                )
-//                            val newNoteSound = async { loadSound(soundPool, newNoteSoundID) }
-//                            loadedMultipleSounds.add(newNoteSound.await())
-//
-//                            if (notesIndexNext + 1 < measure.notes.size) {
-//                                notesIndexNext++
-//                                nextNoteDx = measure.notes[notesIndexNext].dx
-//
-//                            } else {
-//                                break
-//                            }
-//                        }
-//                    }
-
-//                if (loadedMultipleSounds.size > 0) {
-//                    for (loadedSound in loadedMultipleSounds) {
-//                        val streamId = soundPool.play(loadedSound, 1f, 1f, 1, 0, 1f)
-//                        Handler(Looper.getMainLooper()).postDelayed({
-//                            soundPool.stop(streamId)
-//                        }, 3000)
-//                    }
-//                } else {
-//                    val fileName =
-//                        resources.getIdentifier(
-//                            "raw/${note.pitch}",
-//                            null,
-//                            context.packageName
-//                        )
-//                    val loadedSoundId = async { loadSound(soundPool, fileName) }
-//                    soundPool.play(loadedSoundId.await(), 1f, 1f, 1, 0, 1f)
-//                    delay(noteLength.toLong())
-//                }
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        soundPool.stop(streamId)
+                    }, sound.noteLength)
+                }, sound.previousNoteLength)
             }
 
             playButton?.setImageResource(R.drawable.ic_play)
             isMusicPlaying = false
             return@launch
         }
-
     }
 
     override fun onDetachedFromWindow() {
