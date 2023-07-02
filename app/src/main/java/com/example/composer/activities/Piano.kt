@@ -21,14 +21,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import com.example.composer.R
-import com.example.composer.constants.EIGHT_NOTE
-import com.example.composer.constants.HALF_NOTE
-import com.example.composer.constants.HUNDREDTWENTYEIGHT_NOTE
-import com.example.composer.constants.QUARTER_NOTE
-import com.example.composer.constants.SIXTEEN_NOTE
-import com.example.composer.constants.SIXTYFOUR_NOTE
-import com.example.composer.constants.THIRTYTWO_NOTE
-import com.example.composer.constants.WHOLE_NOTE
+import com.example.composer.constants.*
 import com.example.composer.models.*
 import com.example.composer.viewmodel.CompositionViewModel
 import com.example.composer.viewmodel.InstrumentViewModel
@@ -81,6 +74,7 @@ class Piano : AppCompatActivity() {
     private var currentInstrumentPosition = 0
     private var currentMeasureId = 0
     private var currentNoteLength = 0.25f
+    private var currentInstrumentType = "PIANO"
 
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -164,7 +158,7 @@ class Piano : AppCompatActivity() {
 
         }
         var compositionId = 0
-        val extras = intent.extras
+
         // Views
         findViewById<ImageButton>(R.id.new_panel).setOnClickListener {
             isOptionsVisible = !isOptionsVisible
@@ -257,17 +251,10 @@ class Piano : AppCompatActivity() {
         // CompositionViewModel
         compositionViewModel = ViewModelProvider(this)[CompositionViewModel::class.java]
 
-        if (extras != null && intent.hasExtra("compositionId")) {
-            compositionId = extras.getInt("compositionId")
-            Log.d("comp id", compositionId.toString())
-        }
-
         instrumentViewModel.getMaxPosition(compositionId).observe(this) {
             if (it != null) {
                 maxInstrumentPosition = it
-                Log.d("tu smo ej", maxInstrumentPosition.toString())
             }
-
         }
 
         compositionViewModel.getCompositionWIthInstruments(compositionId)
@@ -353,6 +340,17 @@ class Piano : AppCompatActivity() {
 
         findViewById<ImageButton>(R.id.playButtonPiano).setOnClickListener {
             playSymphony(!isPlaying)
+        }
+
+        //Extras
+        val extras = intent.extras
+        if (extras != null) {
+            if (intent.hasExtra("compositionId")) compositionId = extras.getInt("compositionId")
+            if (intent.hasExtra("instrumentType")) {
+                currentInstrumentType =
+                    extras.getString("instrumentType").toString()
+                Log.d("currentInstrumentType", currentInstrumentType)
+            }
         }
 
         if (extras?.getBoolean("isSymphonyMine") == true) {
@@ -673,17 +671,19 @@ class Piano : AppCompatActivity() {
                 if (newKey == "db8") break@outer
 
                 if (octave == 0) {
+                    
                     newKey = "bb0"
                     octave++
                 }
 
-                val fileName = resources.getIdentifier("raw/$newKey", null, this.packageName)
+                val fileName = resources.getIdentifier(
+                    "raw/$currentInstrumentType$newKey",
+                    null,
+                    this.packageName
+                )
                 val loadedFile = soundPool.load(this, fileName, 1)
 
-
                 val blackPianoKey = Button(this)
-
-
 
                 blackPianoKey.id = View.generateViewId()
                 blackPianoKey.text = newKey
@@ -822,7 +822,11 @@ class Piano : AppCompatActivity() {
                 val newKey = key + octave
                 if (newKey == "d8") break@outer
 
-                val fileName = resources.getIdentifier("raw/$newKey", null, this.packageName)
+                val fileName = resources.getIdentifier(
+                    "raw/$currentInstrumentType$newKey",
+                    null,
+                    this.packageName
+                )
                 val loadedFile = soundPool.load(this, fileName, 1)
 
                 val whitePianoKey = Button(this)

@@ -10,7 +10,7 @@
     <string name="opensearch">OpenSearch</string>
     <string name="addsymphony">addSymphony</string>
     <string name="play">play</string>
-    <string name="compostion_name">Compostion name</string>
-    <string name="author_name">Author Name</string>
-    >
+    <string name="compostion_name">Composition name</string>
+    <string name="author_name">Author name</string>
+    <string name="default_instrument">Default instrument</string>
 </resources>
