@@ -14,17 +14,9 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import androidx.core.content.res.ResourcesCompat
 import com.example.composer.R
-import com.example.composer.constants.EIGHT_NOTE
-import com.example.composer.constants.HALF_NOTE
-import com.example.composer.constants.HUNDREDTWENTYEIGHT_NOTE
-import com.example.composer.constants.QUARTER_NOTE
-import com.example.composer.constants.SIXTEEN_NOTE
-import com.example.composer.constants.SIXTYFOUR_NOTE
-import com.example.composer.constants.THIRTYTWO_NOTE
-import com.example.composer.constants.WHOLE_NOTE
+import com.example.composer.constants.*
 import com.example.composer.models.InstrumentWithMeasures
 import com.example.composer.models.MeasureWithNotes
-import com.example.composer.models.Note
 import com.example.composer.models.SoundLoader
 import kotlinx.coroutines.*
 import kotlin.coroutines.resume
@@ -70,7 +62,7 @@ class Staff @JvmOverloads constructor(
 
     private var isMusicPlaying: Boolean = false
     private var measuresWithNotes: List<MeasureWithNotes> = listOf()
-
+    private var compositionSpeed = 0
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -214,7 +206,29 @@ class Staff @JvmOverloads constructor(
                     canvas.translate(note.dx + startingOffset, note.dy + instrumentSpacing)
                     d?.draw(canvas)
                     canvas.translate(-note.dx - startingOffset, -note.dy - instrumentSpacing)
+                    val distanceFromStaff =
+                        note.dy + note.bottom + noteAddedHeight + noteAdjustDy - (note.top + noteAdjustDy)
+                    Log.d("distanceFromStaff", distanceFromStaff.toString())
 
+                    Log.d("linespacing5", (lineSpacing * 5).toString())
+                    Log.d("linespacing-", (-lineSpacing).toString())
+
+                    if (distanceFromStaff > lineSpacing * 5 || distanceFromStaff <= -lineSpacing) {
+                        val smallLineWidth = 20f
+                        val lineX =
+                            note.dx + startingOffset + (note.right - note.left + noteAddedWidth) / 2
+                        for (i in 0..(distanceFromStaff / lineSpacing).toInt()) {
+                            val lineY =
+                                lineSpacing * (5 + i) + lineThickness / 2 + instrumentSpacing
+                            canvas.drawLine(
+                                lineX - smallLineWidth,
+                                lineY,
+                                lineX + smallLineWidth,
+                                lineY,
+                                barLinePaint
+                            )
+                        }
+                    }
                 }
 
                 if (measure.notes.isNotEmpty()) {
@@ -251,7 +265,8 @@ class Staff @JvmOverloads constructor(
         invalidate()
     }
 
-    fun drawNotes(instruments: List<InstrumentWithMeasures>) {
+    fun drawNotes(instruments: List<InstrumentWithMeasures>, compositionSpeed: Int) {
+        this.compositionSpeed = compositionSpeed
         instrumentsWithMeasures = instruments
         measuresWithNotes = instrumentsWithMeasures.map { it.measures }.flatten()
         var largestNoteDx = 200f
@@ -585,7 +600,6 @@ class Staff @JvmOverloads constructor(
     }
 
     private fun playMusic(measuresList: List<MeasureWithNotes>, playButton: ImageButton?) {
-        val speed = 60f
         val measureListCopy = measuresList.toMutableList()
         val sortedNotes = measureListCopy.map { it.notes }.flatten()
         globalScope = GlobalScope.launch(Dispatchers.Default) {
@@ -595,10 +609,10 @@ class Staff @JvmOverloads constructor(
                 .sortedBy { it.dx }) {
                 for (note in sortedNotes.sortedBy { it.dx }) {
                     if (note.dx == unique.dx) {
-                        val noteLength = 4 * note.length * (60.0f / speed) * 1000.0f
+                        val noteLength = 4 * note.length * (compositionSpeed / 100f) * 1000.0f
                         val newNoteSoundID =
                             resources.getIdentifier(
-                                "raw/${note.pitch}",
+                                "raw/${instrumentsWithMeasures.find { it.measures.any { measureWithNotes -> measureWithNotes.measure.id == note.measureId } }?.instrument?.name}${note.pitch}",
                                 null,
                                 context.packageName
                             )
@@ -616,7 +630,7 @@ class Staff @JvmOverloads constructor(
                         )
                     }
                 }
-                previousNoteLength += unique.length * (60.0f / speed) * 1000.0f
+                previousNoteLength += 4 * unique.length * (compositionSpeed / 100f) * 1000.0f
             }
 
             for (sound in noteSounds) {

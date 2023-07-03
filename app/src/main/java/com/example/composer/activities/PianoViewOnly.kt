@@ -1,7 +1,6 @@
 package com.example.composer.activities
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import android.widget.ImageButton
@@ -12,12 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.core.view.isVisible
 import com.example.composer.R
-import com.example.composer.models.FavoriteModel
-import com.example.composer.models.Instrument
-import com.example.composer.models.InstrumentWithMeasures
-import com.example.composer.models.Measure
-import com.example.composer.models.MeasureWithNotes
-import com.example.composer.models.Note
+import com.example.composer.models.*
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -161,7 +155,6 @@ class PianoViewOnly : AppCompatActivity() {
                                 measuresWithNotesList.add(mesureIndex, newMeasureWithNotes)
 
 
-
                             }
                             val newInstrumentWithMeasure: InstrumentWithMeasures =
                                 InstrumentWithMeasures(
@@ -177,7 +170,7 @@ class PianoViewOnly : AppCompatActivity() {
 
                         }
 
-                        staff.drawNotes(instrumentWithMeasuresMutable)
+                        staff.drawNotes(instrumentWithMeasuresMutable, compositionSpeed = 60)
                         progressBar.visibility = View.GONE
 
                     } else {

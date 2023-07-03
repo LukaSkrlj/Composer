@@ -13,4 +13,5 @@
     <string name="compostion_name">Composition name</string>
     <string name="author_name">Author name</string>
     <string name="default_instrument">Default instrument</string>
+    <string name="composition_speed">Composition speed</string>
 </resources>

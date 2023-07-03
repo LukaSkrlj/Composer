@@ -103,10 +103,31 @@
             <androidx.appcompat.widget.AppCompatAutoCompleteTextView
                 android:id="@+id/dropdown"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="62dp"
                 android:inputType="none" />
 
         </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/composition_speed"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:digits="1234567890"
+            android:hint="@string/composition_speed"
+            android:inputType="numberSigned"
+            app:boxBackgroundColor="@android:color/transparent"
+            app:boxStrokeColor="@color/black"
+            app:hintTextColor="@color/black"
+            app:layout_constraintTop_toBottomOf="@+id/instrumentType">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:digits="1234567890"
+                android:inputType="numberSigned" />
+        </com.google.android.material.textfield.TextInputLayout>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.appcompat.widget.AppCompatButton

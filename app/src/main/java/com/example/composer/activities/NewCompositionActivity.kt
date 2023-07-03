@@ -31,10 +31,12 @@ class NewCompositionActivity : AppCompatActivity() {
         val compostionNameField = findViewById<TextInputLayout>(R.id.compostion_name)
         val addCompositionButton = findViewById<AppCompatButton>(R.id.submit)
         val instrumentType = findViewById<TextInputLayout>(R.id.instrumentType)
+        val compositionSpeedField = findViewById<TextInputLayout>(R.id.composition_speed)
         findViewById<ImageButton>(R.id.back_button).setOnClickListener {
             finish()
         }
         var instrumentTypeText: String? = null
+        var compositionSpeed: Int = 0
 
         instrumentType.editText?.doOnTextChanged { text, _, _, _ ->
             if (text != null) {
@@ -54,19 +56,35 @@ class NewCompositionActivity : AppCompatActivity() {
             }
         }
 
+        compositionSpeedField.editText?.doOnTextChanged { text, _, _, _ ->
+            compositionSpeed = 0
+            if (text != null && text.toString() != "" && text.toString().length <= 3) {
+                compositionSpeedField.error = null
+                compositionSpeed = text.toString().toInt()
+                if (compositionSpeed > 260) {
+                    compositionSpeedField.editText!!.setText("260")
+                    compositionSpeed = 260
+                }
+            }
+        }
+
         addCompositionButton.setOnClickListener {
             val compositionNameText = compostionNameField.editText?.text
             val authorNameText = authorNameField.editText?.text
 
-            if (compositionNameText?.length == 0 && authorNameText?.length == 0) {
+            if (compositionNameText?.length == 0) {
                 compostionNameField.error = "Composition name is required"
+            }
+            if (authorNameText?.length == 0) {
                 authorNameField.error = "Author name is required"
-                return@setOnClickListener
-            } else if (compositionNameText?.length == 0) {
-                compostionNameField.error = "Composition name is required"
-                return@setOnClickListener
-            } else if (authorNameText?.length == 0) {
-                authorNameField.error = "Author name is required"
+            }
+            if (instrumentTypeText?.length == 0) {
+                instrumentType.error = "Instrument type is required"
+            }
+            if (compositionSpeed == 0) {
+                instrumentType.error = "Composition speed can't be 0"
+            }
+            if (compostionNameField.error != null || instrumentType.error != null || authorNameField.error != null || compositionSpeed == 0) {
                 return@setOnClickListener
             }
 
@@ -90,7 +108,7 @@ class NewCompositionActivity : AppCompatActivity() {
                         .putExtra(
                             "instrumentType",
                             instrumentTypeText
-                        )
+                        ).putExtra("compositionSpeed", compositionSpeed)
                 )
                 finish()
             })
