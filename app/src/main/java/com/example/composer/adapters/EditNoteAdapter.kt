@@ -214,7 +214,7 @@ private var allNotes = arrayOf(
 class EditNoteAdapter(
     var context: Context,
     private var notesList: MutableList<Note>,
-    private val viewModelStoreOwner: ViewModelStoreOwner?,
+    viewModelStoreOwner: ViewModelStoreOwner?,
     private val lifecycleOwner: LifecycleOwner?,
 ) : RecyclerView.Adapter<EditNoteAdapter.ViewHolder>() {
     var noteViewModel =

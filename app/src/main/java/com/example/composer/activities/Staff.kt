@@ -238,39 +238,43 @@ class Staff @JvmOverloads constructor(
                         note.dy + note.bottom + noteAddedHeight + noteAdjustDy - (note.top + noteAdjustDy)
 
                     if (distanceFromStaff > lineSpacing * 5 || distanceFromStaff <= -lineSpacing) {
-                        val smallLineWidth = 20f
-                        val lineX =
-                            note.dx + startingOffset + (note.right - note.left + noteAddedWidth) / 2
-                        for (i in 0..(distanceFromStaff / lineSpacing).toInt()) {
-                            val lineY =
-                                lineSpacing * (5 + i) + lineThickness / 2 + instrumentSpacing
-                            canvas.drawLine(
-                                lineX - smallLineWidth,
-                                lineY,
-                                lineX + smallLineWidth,
-                                lineY,
-                                barLinePaint
-                            )
+                        note.dy + note.bottom + noteAddedHeight - note.top
+
+                        if (distanceFromStaff >= lineSpacing * 5 || distanceFromStaff <= -lineSpacing) {
+                            val smallLineWidth = 20f
+                            val lineX =
+                                note.dx + startingOffset + (note.right - note.left + noteAddedWidth) / 2
+                            for (i in 0..((distanceFromStaff - lineSpacing * 5) / lineSpacing).toInt()) {
+                                val lineY =
+                                    lineSpacing * (5 + i) + lineThickness / 2 + instrumentSpacing
+                                canvas.drawLine(
+                                    lineX - smallLineWidth,
+                                    lineY,
+                                    lineX + smallLineWidth,
+                                    lineY,
+                                    barLinePaint
+                                )
+                            }
                         }
                     }
-                }
 
-                if (measure.notes.isNotEmpty()) {
-                    previousMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
+                    if (measure.notes.isNotEmpty()) {
+                        previousMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
+                    }
                 }
+                this.drawEnd(canvas, previousMeasureEnd, instrumentSpacing)
+                instrumentSpacing += defaultInstrumentSpacing
             }
-            this.drawEnd(canvas, previousMeasureEnd, instrumentSpacing)
-            instrumentSpacing += defaultInstrumentSpacing
-        }
 
-        if (!isViewOnly) {
-            pointerDrawable?.setBounds(
-                currentNoteDx.toInt() + 2 * clefSpacing.toInt(),
-                50 + currentInstrumentPosition * defaultInstrumentSpacing.toInt(),
-                currentNoteDx.toInt() + 2 * clefSpacing.toInt() + 50,
-                100 + currentInstrumentPosition * defaultInstrumentSpacing.toInt()
-            )
-            pointerDrawable?.draw(canvas)
+            if (!isViewOnly) {
+                pointerDrawable?.setBounds(
+                    currentNoteDx.toInt() + 2 * clefSpacing.toInt(),
+                    50 + currentInstrumentPosition * defaultInstrumentSpacing.toInt(),
+                    currentNoteDx.toInt() + 2 * clefSpacing.toInt() + 50,
+                    100 + currentInstrumentPosition * defaultInstrumentSpacing.toInt()
+                )
+                pointerDrawable?.draw(canvas)
+            }
         }
     }
 
@@ -729,7 +733,7 @@ class Staff @JvmOverloads constructor(
                 .sortedBy { it.dx }) {
                 for (note in sortedNotes.sortedBy { it.dx }) {
                     if (note.dx == unique.dx) {
-                        val noteLength = 4 * note.length * (compositionSpeed / 100f) * 1000.0f
+                        val noteLength = 4 * note.length * (60f / compositionSpeed) * 1000.0f
                         val newNoteSoundID =
                             resources.getIdentifier(
                                 "raw/${instrumentsWithMeasures.find { it.measures.any { measureWithNotes -> measureWithNotes.measure.id == note.measureId } }?.instrument?.name}${note.pitch}",
@@ -750,7 +754,7 @@ class Staff @JvmOverloads constructor(
                         )
                     }
                 }
-                previousNoteLength += 4 * unique.length * (compositionSpeed / 100f) * 1000.0f
+                previousNoteLength += 4 * unique.length * (60f / compositionSpeed) * 1000.0f
             }
 
             for (sound in noteSounds) {
