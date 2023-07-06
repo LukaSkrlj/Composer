@@ -82,7 +82,7 @@ class NewCompositionActivity : AppCompatActivity() {
                 instrumentType.error = "Instrument type is required"
             }
             if (compositionSpeed == 0) {
-                instrumentType.error = "Composition speed can't be 0"
+                compositionSpeedField.error = "Composition speed can't be 0"
             }
             if (compostionNameField.error != null || instrumentType.error != null || authorNameField.error != null || compositionSpeed == 0) {
                 return@setOnClickListener

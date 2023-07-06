@@ -16,8 +16,8 @@ interface CompositionDao {
     @Query("DELETE FROM Composition WHERE id = :compositionId")
     suspend fun deleteComposition(compositionId: Int)
 
-    @Query("UPDATE Composition SET name= :compositionName, author = :authorName WHERE id = :compositionId")
-    suspend fun  updateCompositionInfo(compositionName: String, authorName: String, compositionId: Int)
+    @Query("UPDATE Composition SET name= :compositionName, author = :authorName, compositionSpeed = :compositionSpeed WHERE id = :compositionId")
+    suspend fun  updateCompositionInfo(compositionName: String, authorName: String, compositionId: Int, compositionSpeed: Int)
 
     @Transaction
     @Query("SELECT * FROM Composition WHERE id = :id")
