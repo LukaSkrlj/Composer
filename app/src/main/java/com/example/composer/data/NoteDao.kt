@@ -10,7 +10,7 @@ interface NoteDao {
     suspend fun upsertNote(note: Note)
 
     @Delete
-    suspend fun deleteNote(note: Note)
+    suspend fun deleteNote(note: Note): Int
 
     @Query("DELETE FROM Note")
     fun deleteNotes(): Void
@@ -20,4 +20,8 @@ interface NoteDao {
 
     @Query("SELECT MAX(dx) FROM Note")
     fun getLastNote(): LiveData<Int>
+
+    @Update
+    fun updateNote(note: Note): Void
+
 }

@@ -36,7 +36,7 @@ class NewCompositionActivity : AppCompatActivity() {
             finish()
         }
         var instrumentTypeText: String? = null
-        var compositionSpeed: Int = 0
+        var compositionSpeed = 0
 
         instrumentType.editText?.doOnTextChanged { text, _, _, _ ->
             if (text != null) {

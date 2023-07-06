@@ -36,7 +36,7 @@ class PianoViewOnly : AppCompatActivity() {
         findViewById<ImageView>(R.id.back).setOnClickListener {
             finish()
         }
-        staff.setHidePointer(true)
+        staff.setIsViewOnly(true)
 
 
         if (currentUser == null) {

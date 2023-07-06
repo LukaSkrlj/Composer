@@ -216,12 +216,15 @@ class Piano : AppCompatActivity() {
                 currentInstrumentId =
                     instrumentsWithMeasures.find { it.instrument.position == currentInstrumentPosition }?.instrument?.id
                         ?: 0
-
-                currentNoteDx =
-                    instrumentsWithMeasures[currentInstrumentPosition].measures.last().notes.last().dx
-                currentMeasureId =
-                    instrumentsWithMeasures[currentInstrumentPosition].measures.last().measure.id
-                staff.drawPointer(currentNoteDx, currentInstrumentPosition)
+                if (instrumentsWithMeasures[currentInstrumentPosition].measures.isNotEmpty()) {
+                    currentNoteDx =
+                        instrumentsWithMeasures[currentInstrumentPosition].measures.last().notes.last().dx
+                    currentMeasureId =
+                        instrumentsWithMeasures[currentInstrumentPosition].measures.last().measure.id
+                    staff.drawPointer(currentNoteDx, currentInstrumentPosition)
+                } else {
+                    staff.drawPointer(0f, currentInstrumentPosition)
+                }
             }
         }
 
@@ -274,7 +277,6 @@ class Piano : AppCompatActivity() {
         compositionViewModel.getCompositionWIthInstruments(compositionId)
             .observe(this) { compositionWithInstruments ->
                 if (compositionWithInstruments != null) {
-
                     //fine largest dx
                     if (compositionWithInstruments.instruments.isNotEmpty() && !isStartingDxFound) {
                         for (instrument in compositionWithInstruments.instruments) {
@@ -686,6 +688,7 @@ class Piano : AppCompatActivity() {
                     loadedFile = soundPool.load(this, fileName, 1)
                 }
 
+
                 val blackPianoKey = Button(this)
 
                 blackPianoKey.id = View.generateViewId()
@@ -965,7 +968,6 @@ class Piano : AppCompatActivity() {
                 }
 
                 constraintLayout.addView(whitePianoKey)
-
                 lineCounter++
             }
         }

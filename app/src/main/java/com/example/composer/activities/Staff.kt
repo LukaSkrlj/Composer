@@ -1,26 +1,46 @@
 package com.example.composer.activities
 
+import android.app.Activity
+import android.app.Dialog
 import android.content.Context
+import android.content.ContextWrapper
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.media.SoundPool
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
+import android.util.Log
+import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewParent
+import android.view.Window
 import android.widget.ImageButton
 import androidx.core.content.res.ResourcesCompat
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.composer.R
+import com.example.composer.adapters.EditNoteAdapter
 import com.example.composer.constants.*
 import com.example.composer.models.InstrumentWithMeasures
 import com.example.composer.models.MeasureWithNotes
 import com.example.composer.models.SoundLoader
+import com.example.composer.models.Note
 import kotlinx.coroutines.*
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 class Staff @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
@@ -34,10 +54,13 @@ class Staff @JvmOverloads constructor(
         }
     }
 
+    private var notesAdapter: EditNoteAdapter? = null
+    private var startX = 0f
+    private var startY = 0f
     private var currentNoteDx = 0f
     private var currentInstrumentPosition = 0
     private val barLinePaint = Paint()
-    private var hidePointer = false
+    private var isViewOnly = false
     private var globalScope: Job? = null
     private val soundPool: SoundPool = SoundPool.Builder().setMaxStreams(100).build()
     private val linesCount = 5
@@ -123,6 +146,7 @@ class Staff @JvmOverloads constructor(
                     var noteAddedHeight = 0
                     var noteAddedWidth = 0
                     var noteAdjustDy = 0
+                    var noteAdjustDx = 0
 
                     val d = ResourcesCompat.getDrawable(
                         resources,
@@ -131,11 +155,13 @@ class Staff @JvmOverloads constructor(
                                 noteAdjustDy = 60
                                 noteAddedHeight = -60
                                 noteAddedWidth = -50
+                                noteAdjustDx = 30
                                 R.drawable.note_wholenote
                             }
 
                             HALF_NOTE -> {
                                 noteAddedWidth = -50
+                                noteAdjustDx = 20
                                 R.drawable.note_halfnote
                             }
 
@@ -149,11 +175,13 @@ class Staff @JvmOverloads constructor(
 
                             SIXTEEN_NOTE -> {
                                 noteAddedWidth = -30
+                                noteAdjustDx = 20
                                 R.drawable.note_sixteenthnote
                             }
 
                             THIRTYTWO_NOTE -> {
                                 noteAddedWidth = -30
+                                noteAdjustDx = 20
                                 R.drawable.note_thirtysecondnote
                             }
 
@@ -161,6 +189,7 @@ class Staff @JvmOverloads constructor(
                                 noteAdjustDy = -15
                                 noteAddedWidth = -30
                                 noteAddedHeight = 15
+                                noteAdjustDx = 20
                                 R.drawable.note_sixtyfourth
                             }
 
@@ -168,6 +197,7 @@ class Staff @JvmOverloads constructor(
                                 noteAdjustDy = -25
                                 noteAddedWidth = -30
                                 noteAddedHeight = 25
+                                noteAdjustDx = 20
                                 R.drawable.note_hundredtwentyeighthnote
                             }
 
@@ -196,53 +226,78 @@ class Staff @JvmOverloads constructor(
                     }
 
                     d?.setBounds(
-                        note.left,
+                        (note.left + noteAdjustDx),
                         note.top + noteAdjustDy,
-                        note.right + noteAddedWidth,
+                        (note.right + noteAddedWidth + noteAdjustDx),
                         note.bottom + noteAddedHeight + noteAdjustDy
                     )
-
                     canvas.translate(note.dx + startingOffset, note.dy + instrumentSpacing)
                     d?.draw(canvas)
                     canvas.translate(-note.dx - startingOffset, -note.dy - instrumentSpacing)
                     val distanceFromStaff =
+                        note.dy + note.bottom + noteAddedHeight + noteAdjustDy - (note.top + noteAdjustDy)
+
+                    if (distanceFromStaff > lineSpacing * 5 || distanceFromStaff <= -lineSpacing) {
                         note.dy + note.bottom + noteAddedHeight - note.top
 
-                    if (distanceFromStaff >= lineSpacing * 5 || distanceFromStaff <= -lineSpacing) {
-                        val smallLineWidth = 20f
-                        val lineX =
-                            note.dx + startingOffset + (note.right - note.left + noteAddedWidth) / 2
-                        for (i in 0..((distanceFromStaff - lineSpacing * 5) / lineSpacing).toInt()) {
-                            val lineY =
-                                lineSpacing * (5 + i) + lineThickness / 2 + instrumentSpacing
-                            canvas.drawLine(
-                                lineX - smallLineWidth,
-                                lineY,
-                                lineX + smallLineWidth,
-                                lineY,
-                                barLinePaint
-                            )
+                        if (distanceFromStaff >= lineSpacing * 5 || distanceFromStaff <= -lineSpacing) {
+                            val smallLineWidth = 20f
+                            val lineX =
+                                note.dx + startingOffset + (note.right - note.left + noteAddedWidth) / 2
+                            for (i in 0..((distanceFromStaff - lineSpacing * 5) / lineSpacing).toInt()) {
+                                val lineY =
+                                    lineSpacing * (5 + i) + lineThickness / 2 + instrumentSpacing
+                                canvas.drawLine(
+                                    lineX - smallLineWidth,
+                                    lineY,
+                                    lineX + smallLineWidth,
+                                    lineY,
+                                    barLinePaint
+                                )
+                            }
                         }
                     }
-                }
 
-                if (measure.notes.isNotEmpty()) {
-                    previousMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
+                    if (measure.notes.isNotEmpty()) {
+                        previousMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
+                    }
                 }
+                this.drawEnd(canvas, previousMeasureEnd, instrumentSpacing)
+                instrumentSpacing += defaultInstrumentSpacing
             }
-            this.drawEnd(canvas, previousMeasureEnd, instrumentSpacing)
-            instrumentSpacing += defaultInstrumentSpacing
-        }
 
-        if (!hidePointer) {
-            pointerDrawable?.setBounds(
-                currentNoteDx.toInt() + 2 * clefSpacing.toInt(),
-                50 + currentInstrumentPosition * defaultInstrumentSpacing.toInt(),
-                currentNoteDx.toInt() + 2 * clefSpacing.toInt() + 50,
-                100 + currentInstrumentPosition * defaultInstrumentSpacing.toInt()
-            )
-            pointerDrawable?.draw(canvas)
+            if (!isViewOnly) {
+                pointerDrawable?.setBounds(
+                    currentNoteDx.toInt() + 2 * clefSpacing.toInt(),
+                    50 + currentInstrumentPosition * defaultInstrumentSpacing.toInt(),
+                    currentNoteDx.toInt() + 2 * clefSpacing.toInt() + 50,
+                    100 + currentInstrumentPosition * defaultInstrumentSpacing.toInt()
+                )
+                pointerDrawable?.draw(canvas)
+            }
         }
+    }
+
+    private fun getLifecycleOwner(): LifecycleOwner? {
+        var context = context
+        while (context is ContextWrapper) {
+            if (context is Activity) {
+                return context as LifecycleOwner
+            }
+            context = (context as ContextWrapper).baseContext
+        }
+        return null
+    }
+
+    private fun getViewModelStoreOwner(): ViewModelStoreOwner? {
+        var context = context
+        while (context is ContextWrapper) {
+            if (context is ViewModelStoreOwner) {
+                return context
+            }
+            context = (context as ContextWrapper).baseContext
+        }
+        return null
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -250,9 +305,83 @@ class Staff @JvmOverloads constructor(
         setMeasuredDimension(widthMeasureSpec, heightMeasureSpec)
     }
 
-    fun setHidePointer(hidePointer: Boolean) {
-        this.hidePointer = hidePointer
+
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+
+        when (event?.action) {
+            MotionEvent.ACTION_DOWN -> {
+                startX = event.x;
+                startY = event.y;
+                return true;
+            }
+
+            MotionEvent.ACTION_UP -> {
+                val endX = event.x
+                val endY = event.y
+                // Check for a click gesture
+                val CLICK_THRESHOLD = 10f
+                if (abs(endX - startX) < CLICK_THRESHOLD && abs(endY - startY) < CLICK_THRESHOLD && !isViewOnly) {
+                    // Handle click here
+
+                    val instrumentCounter = (endY.roundToInt() / 300)
+
+                    if (instrumentCounter < instrumentsWithMeasures.size) {
+                        val notesThatMatchDx =
+                            instrumentsWithMeasures[instrumentCounter].measures.map { it ->
+                                it.notes.filter { note ->
+                                    endX >= note.dx.plus(100) && endX <= note.dx.plus(150)
+                                }
+                            }
+                        if (notesThatMatchDx.isNotEmpty()) {
+                            for (notesList in notesThatMatchDx) {
+                                if (notesList.isNotEmpty()) {
+                                    showDialog(notesList)
+                                    break
+                                }
+                            }
+                        }
+                    }
+
+                    return true;
+                }
+            }
+
+        }
+        return super.onTouchEvent(event)
     }
+
+    fun setIsViewOnly(isViewOnly: Boolean) {
+        this.isViewOnly = isViewOnly
+    }
+
+    private fun showDialog(notes: List<Note>) {
+        val dialog = Dialog(context)
+
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.bottom_sheet_notes)
+
+        val recyclerView = dialog.findViewById<RecyclerView>(R.id.notes_list_recycler)
+        notesAdapter = EditNoteAdapter(
+            context,
+            notes.toMutableList(),
+            getViewModelStoreOwner(),
+            getLifecycleOwner()
+        )
+
+        recyclerView.adapter = notesAdapter
+        recyclerView.layoutManager = LinearLayoutManager(context)
+
+        dialog.show()
+        dialog.window?.setLayout(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dialog.window?.attributes?.windowAnimations = R.style.DialogAnimations
+        dialog.window?.setGravity(Gravity.BOTTOM)
+
+    }
+
 
     fun drawPointer(currentNoteDx: Float, currentInstrumentPosition: Int) {
         this.currentNoteDx = currentNoteDx
