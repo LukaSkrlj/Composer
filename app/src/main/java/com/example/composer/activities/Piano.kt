@@ -208,17 +208,19 @@ class Piano : AppCompatActivity() {
                 currentInstrumentId =
                     instrumentsWithMeasures.find { it.instrument.position == currentInstrumentPosition }?.instrument?.id
                         ?: 0
-
-                currentNoteDx =
-                    instrumentsWithMeasures[currentInstrumentPosition].measures.last().notes.last().dx
-                currentMeasureId =
-                    instrumentsWithMeasures[currentInstrumentPosition].measures.last().measure.id
-                staff.drawPointer(currentNoteDx, currentInstrumentPosition)
+                if (instrumentsWithMeasures[currentInstrumentPosition].measures.isNotEmpty()) {
+                    currentNoteDx =
+                        instrumentsWithMeasures[currentInstrumentPosition].measures.last().notes.last().dx
+                    currentMeasureId =
+                        instrumentsWithMeasures[currentInstrumentPosition].measures.last().measure.id
+                    staff.drawPointer(currentNoteDx, currentInstrumentPosition)
+                } else {
+                    staff.drawPointer(0f, currentInstrumentPosition)
+                }
             }
         }
 
         findViewById<ImageButton>(R.id.selectUpperInstrument).setOnClickListener {
-            Log.d("tu smo ej", currentInstrumentPosition.toString())
             if (instrumentsWithMeasures.any { it.instrument.position == currentInstrumentPosition - 1 }) {
                 currentInstrumentPosition -= 1
                 currentInstrumentId =
@@ -265,7 +267,6 @@ class Piano : AppCompatActivity() {
         instrumentViewModel.getMaxPosition(compositionId).observe(this) {
             if (it != null) {
                 maxInstrumentPosition = it
-                Log.d("tu smo ej", maxInstrumentPosition.toString())
             }
 
         }
@@ -273,7 +274,6 @@ class Piano : AppCompatActivity() {
         compositionViewModel.getCompositionWIthInstruments(compositionId)
             .observe(this) { compositionWithInstruments ->
                 if (compositionWithInstruments != null) {
-
                     //fine largest dx
                     if (compositionWithInstruments.instruments.isNotEmpty() && !isStartingDxFound) {
                         for (instrument in compositionWithInstruments.instruments) {
@@ -676,7 +676,6 @@ class Piano : AppCompatActivity() {
                     newKey = "bb0"
                     octave++
                 }
-
                 val fileName = resources.getIdentifier("raw/$newKey", null, this.packageName)
                 val loadedFile = soundPool.load(this, fileName, 1)
 
@@ -952,7 +951,6 @@ class Piano : AppCompatActivity() {
                 }
 
                 constraintLayout.addView(whitePianoKey)
-
                 lineCounter++
             }
         }

@@ -15,7 +15,6 @@
         </item>
         <item name="android:fontFamily">@font/jost</item>
 
-
         <!-- Optional: set to transparent if your app is drawing behind the status bar. -->
         <item name="android:statusBarColor">
             @android:color/transparent
@@ -26,7 +25,10 @@
             true
         </item>
     </style>
-
+    <style name="DialogAnimations">
+        <item name="android:windowEnterAnimation">@anim/slide_in_bottom</item>
+        <item name="android:windowExitAnimation">@anim/slide_out_bottom</item>
+    </style>
     <style name="Theme.Composer.NoActionBarAndStatusBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
