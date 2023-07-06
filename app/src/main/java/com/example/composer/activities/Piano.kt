@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.media.SoundPool
 import android.os.Build
 import android.os.Bundle
+import android.text.InputType
 import android.util.Log
 import android.view.Gravity
 import android.view.View
@@ -93,6 +94,7 @@ class Piano : AppCompatActivity() {
         var maxInstrumentPosition = currentInstrumentPosition
         val compositionNameInput = findViewById<TextInputLayout>(R.id.compostion_name)
         val authorNameInput = findViewById<TextInputLayout>(R.id.author_name)
+        val compositionSpeedInput = findViewById<TextInputLayout>(R.id.composition_speed_input)
         val scrollContainer = findViewById<HorizontalScrollView>(R.id.scrollContainer)
         val currentNoteLengthImage = findViewById<ImageView>(R.id.current_note)
         val optionsContainer = findViewById<ConstraintLayout>(R.id.optionsContainer)
@@ -298,7 +300,8 @@ class Piano : AppCompatActivity() {
                     this.compositionWithInstruments = compositionWithInstruments
                     findViewById<TextView>(R.id.symphonyName).text =
                         compositionWithInstruments.composition.name
-
+                    compositionSpeedInput.editText?.setText(compositionWithInstruments.composition.compositionSpeed.toString())
+                    compositionSpeedInput.editText?.inputType = InputType.TYPE_CLASS_NUMBER
                     authorNameInput.editText?.setText(compositionWithInstruments.composition.author)
                     compositionNameInput.editText?.setText(compositionWithInstruments.composition.name)
                     progressBar.isVisible = false
@@ -308,8 +311,9 @@ class Piano : AppCompatActivity() {
                         this.updateComposition(
                             authorNameInput,
                             compositionNameInput,
+                            compositionSpeedInput,
                             compositionId,
-                            compositionWithInstruments
+                            compositionWithInstruments,
                         )
                     }
 
@@ -991,8 +995,9 @@ class Piano : AppCompatActivity() {
     private fun updateComposition(
         authorNameInput: TextInputLayout,
         compositionNameInput: TextInputLayout,
+        compositionSpeedInput: TextInputLayout,
         compositionId: Int,
-        compositionWithInstruments: CompositionWithInstruments
+        compositionWithInstruments: CompositionWithInstruments,
     ) {
         if (authorNameInput.editText?.text?.isEmpty() == true && compositionNameInput.editText?.text?.isEmpty() == true) {
             compositionNameInput.editText?.error = "Composition name is required"
@@ -1010,12 +1015,26 @@ class Piano : AppCompatActivity() {
             return
         }
 
+        if (compositionSpeedInput.editText?.text?.isEmpty() == true) {
+            compositionSpeedInput.editText?.error = "Speed cannot be be empty"
+            return
+        }
+
+
+        if (compositionSpeedInput.editText?.text?.toString()
+                ?.toInt() == 0 || compositionSpeedInput.editText?.text?.toString()?.toInt()!! > 260
+        ) {
+            compositionSpeedInput.editText?.error = "Speed must be between 0 and 260"
+            return
+        }
+
         compositionViewModel.updateCompositionInfo(
             compositionName = compositionNameInput.editText?.text.toString(),
             authorName = authorNameInput.editText?.text.toString(),
-            compositionId = compositionId
+            compositionId = compositionId,
+            compositionSpeed = compositionSpeedInput.editText?.text?.toString()?.toInt()!!
         )
-
+        compositionSpeed = compositionSpeedInput.editText?.text?.toString()?.toInt()!!
         findViewById<TextView>(R.id.symphonyName).text =
             compositionWithInstruments.composition.name
     }

@@ -38,10 +38,11 @@ class CompositionViewModel(application: Application) : AndroidViewModel(applicat
     fun updateCompositionInfo(
         compositionName: String,
         authorName: String,
-        compositionId: Int
+        compositionId: Int,
+        compositionSpeed: Int,
     ) {
         viewModelScope.launch(Dispatchers.IO) {
-            repository.updateCompositionInfo(compositionName, authorName, compositionId)
+            repository.updateCompositionInfo(compositionName, authorName, compositionId, compositionSpeed)
         }
     }
 
