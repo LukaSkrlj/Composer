@@ -251,12 +251,6 @@ class Piano : AppCompatActivity() {
             currentNoteDx += horizontalNoteSpacing
             staff.drawPointer(currentNoteDx, currentInstrumentPosition)
         }
-//        findViewById<ImageButton>(R.id.backNote).setOnClickListener {
-//            if(currentNoteDx.compareTo(100) >= 0) {
-//                currentNoteDx -= horizontalNoteSpacing
-//                staff.drawPointer(currentNoteDx)
-//            }
-//        }
 
 
         if (currentUser == null) {
@@ -294,7 +288,7 @@ class Piano : AppCompatActivity() {
                                 currentInstrumentPosition = instrument.instrument.position
                             }
                         }
-
+                        compositionSpeed = compositionWithInstruments.composition.compositionSpeed
                         staff.drawPointer(currentNoteDx, currentInstrumentPosition)
                         isStartingDxFound = true
                     }
@@ -886,6 +880,7 @@ class Piano : AppCompatActivity() {
                             instrumentId = currentInstrumentId,
                             clef = "treble"
                         )
+
                         val insertObserver = measureViewModel.insertMeasure(
                             newMeasure
                         )

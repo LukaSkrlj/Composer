@@ -91,7 +91,7 @@ class Staff @JvmOverloads constructor(
 
         var instrumentSpacing = 100f
         for (instrument in instrumentsWithMeasures) {
-
+            Log.d("tu smo ej", instrument.toString())
             var previousMeasureEnd = 0f
             for (measure in instrument.measures) {
                 //Measure start position
@@ -262,9 +262,9 @@ class Staff @JvmOverloads constructor(
                         previousMeasureEnd = measure.notes.last().dx + lastNoteMeasureSpacing
                     }
                 }
-                this.drawEnd(canvas, previousMeasureEnd, instrumentSpacing)
-                instrumentSpacing += defaultInstrumentSpacing
             }
+            this.drawEnd(canvas, previousMeasureEnd, instrumentSpacing)
+            instrumentSpacing += defaultInstrumentSpacing
 
             if (!isViewOnly) {
                 pointerDrawable?.setBounds(
@@ -307,7 +307,6 @@ class Staff @JvmOverloads constructor(
 
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-
         when (event?.action) {
             MotionEvent.ACTION_DOWN -> {
                 startX = event.x;
@@ -379,7 +378,6 @@ class Staff @JvmOverloads constructor(
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         dialog.window?.attributes?.windowAnimations = R.style.DialogAnimations
         dialog.window?.setGravity(Gravity.BOTTOM)
-
     }
 
 
@@ -408,7 +406,6 @@ class Staff @JvmOverloads constructor(
                 largestNoteDx.toInt() + 250,
                 instrumentsWithMeasures.size * defaultInstrumentSpacing.toInt() + 200
             )
-
         invalidate()
     }
 
