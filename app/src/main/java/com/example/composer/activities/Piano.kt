@@ -21,14 +21,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import com.example.composer.R
-import com.example.composer.constants.EIGHT_NOTE
-import com.example.composer.constants.HALF_NOTE
-import com.example.composer.constants.HUNDREDTWENTYEIGHT_NOTE
-import com.example.composer.constants.QUARTER_NOTE
-import com.example.composer.constants.SIXTEEN_NOTE
-import com.example.composer.constants.SIXTYFOUR_NOTE
-import com.example.composer.constants.THIRTYTWO_NOTE
-import com.example.composer.constants.WHOLE_NOTE
+import com.example.composer.constants.*
 import com.example.composer.models.*
 import com.example.composer.viewmodel.CompositionViewModel
 import com.example.composer.viewmodel.InstrumentViewModel
@@ -81,6 +74,8 @@ class Piano : AppCompatActivity() {
     private var currentInstrumentPosition = 0
     private var currentMeasureId = 0
     private var currentNoteLength = 0.25f
+    private var currentInstrumentType = "PIANO"
+    private var compositionSpeed = 0
 
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -163,8 +158,21 @@ class Piano : AppCompatActivity() {
             }
 
         }
+        //Extras
         var compositionId = 0
         val extras = intent.extras
+        if (extras != null) {
+            if (intent.hasExtra("compositionId")) {
+                compositionId = extras.getInt("compositionId")
+            }
+            if (intent.hasExtra("instrumentType")) {
+                currentInstrumentType =
+                    extras.getString("instrumentType").toString()
+            }
+            if (intent.hasExtra("compositionSpeed")) {
+                compositionSpeed = extras.getInt("compositionSpeed")
+            }
+        }
         // Views
         findViewById<ImageButton>(R.id.new_panel).setOnClickListener {
             isOptionsVisible = !isOptionsVisible
@@ -221,6 +229,7 @@ class Piano : AppCompatActivity() {
         }
 
         findViewById<ImageButton>(R.id.selectUpperInstrument).setOnClickListener {
+            Log.d("tu smo ej", currentInstrumentPosition.toString())
             if (instrumentsWithMeasures.any { it.instrument.position == currentInstrumentPosition - 1 }) {
                 currentInstrumentPosition -= 1
                 currentInstrumentId =
@@ -259,16 +268,10 @@ class Piano : AppCompatActivity() {
         // CompositionViewModel
         compositionViewModel = ViewModelProvider(this)[CompositionViewModel::class.java]
 
-        if (extras != null && intent.hasExtra("compositionId")) {
-            compositionId = extras.getInt("compositionId")
-            Log.d("comp id", compositionId.toString())
-        }
-
         instrumentViewModel.getMaxPosition(compositionId).observe(this) {
             if (it != null) {
                 maxInstrumentPosition = it
             }
-
         }
 
         compositionViewModel.getCompositionWIthInstruments(compositionId)
@@ -314,17 +317,14 @@ class Piano : AppCompatActivity() {
                             compositionId,
                             compositionWithInstruments
                         )
-
                     }
-
-
 
                     instrumentsWithMeasures = compositionWithInstruments.instruments
                     if (instrumentsWithMeasures.isEmpty()) {
                         instrumentViewModel.insertInstrument(
                             Instrument(
                                 position = currentInstrumentPosition,
-                                name = "piano",
+                                name = currentInstrumentType,
                                 compositionId = compositionWithInstruments.composition.id
                             )
                         ).observe(this) {
@@ -332,7 +332,7 @@ class Piano : AppCompatActivity() {
                         }
                     } else {
                         measuresWithNotes = instrumentsWithMeasures.map { it.measures }.flatten()
-                        staff.drawNotes(instrumentsWithMeasures)
+                        staff.drawNotes(instrumentsWithMeasures, compositionSpeed)
                     }
                 }
             }
@@ -673,16 +673,23 @@ class Piano : AppCompatActivity() {
                 if (newKey == "db8") break@outer
 
                 if (octave == 0) {
+
                     newKey = "bb0"
                     octave++
                 }
-                val fileName = resources.getIdentifier("raw/$newKey", null, this.packageName)
-                val loadedFile = soundPool.load(this, fileName, 1)
+
+                val fileName = resources.getIdentifier(
+                    "raw/$currentInstrumentType$newKey",
+                    null,
+                    this.packageName
+                )
+                var loadedFile: Int? = null
+                if (fileName != 0) {
+                    loadedFile = soundPool.load(this, fileName, 1)
+                }
 
 
                 val blackPianoKey = Button(this)
-
-
 
                 blackPianoKey.id = View.generateViewId()
                 blackPianoKey.text = newKey
@@ -699,7 +706,9 @@ class Piano : AppCompatActivity() {
                 blackPianoKey.bringToFront()
 
                 blackPianoKey.setOnClickListener {
-                    this.soundPool.play(loadedFile, 1f, 1f, 1, 0, speed)
+                    if (loadedFile != null) {
+                        this.soundPool.play(loadedFile, 1f, 1f, 1, 0, speed)
+                    }
                     //Update this as white keys
                     //noteViewModel.addNote(Note(right = 82, bottom = 82, dx = 0f, dy = 0f))
                     var countSum = 0f
@@ -820,12 +829,18 @@ class Piano : AppCompatActivity() {
                 if (key == "c") ++octave
                 val newKey = key + octave
                 if (newKey == "d8") break@outer
+                val fileName = resources.getIdentifier(
+                    "raw/$currentInstrumentType$newKey",
+                    null,
+                    this.packageName
+                )
 
-                val fileName = resources.getIdentifier("raw/$newKey", null, this.packageName)
-                val loadedFile = soundPool.load(this, fileName, 1)
+                var loadedFile: Int? = null
+                if (fileName != 0) {
+                    loadedFile = soundPool.load(this, fileName, 1)
+                }
 
                 val whitePianoKey = Button(this)
-
 
                 whitePianoKey.id =
                     resources.getIdentifier(newKey + "_piano_tile", "id", this.packageName)
@@ -847,7 +862,6 @@ class Piano : AppCompatActivity() {
                 )
                 chainIds[lineCounter] = whitePianoKey.id
 
-
                 whitePianoKey.text = newKey
                 whitePianoKey.gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
                 whitePianoKey.setTextColor(Color.parseColor(octaveColor[octave]))
@@ -856,7 +870,10 @@ class Piano : AppCompatActivity() {
                 val dy = initialNotePosition - (lineSpacing / 2) * lineCounter
 
                 whitePianoKey.setOnClickListener {
-                    this.soundPool.play(loadedFile, 1f, 1f, 1, 0, speed)
+                    Log.d("loadedFile", loadedFile.toString())
+                    if (loadedFile != null) {
+                        this.soundPool.play(loadedFile, 1f, 1f, 1, 0, speed)
+                    }
                     var countSum = 0f
                     var measurePosition = 0
                     val df = DecimalFormat("#.##")
@@ -998,19 +1015,14 @@ class Piano : AppCompatActivity() {
             return
         }
 
-
         compositionViewModel.updateCompositionInfo(
             compositionName = compositionNameInput.editText?.text.toString(),
             authorName = authorNameInput.editText?.text.toString(),
             compositionId = compositionId
         )
 
-
-
         findViewById<TextView>(R.id.symphonyName).text =
             compositionWithInstruments.composition.name
-
-
     }
 }
 
