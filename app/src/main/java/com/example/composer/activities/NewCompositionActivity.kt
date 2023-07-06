@@ -96,6 +96,7 @@ class NewCompositionActivity : AppCompatActivity() {
                 Composition(
                     name = compositionNameText.toString(),
                     author = authorNameText.toString(),
+                    compositionSpeed = compositionSpeed
                 )
             ).observe(this, Observer {
                 this.startActivity(

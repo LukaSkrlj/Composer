@@ -9,5 +9,6 @@ data class Composition(
     @PrimaryKey(autoGenerate = true) var id: Int = 0,
     var name: String,
     var author: String,
+    var compositionSpeed: Int,
     var userId: Int? = null
 )
