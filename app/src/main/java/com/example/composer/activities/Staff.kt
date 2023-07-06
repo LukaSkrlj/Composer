@@ -8,7 +8,6 @@ import android.media.SoundPool
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
@@ -207,17 +206,13 @@ class Staff @JvmOverloads constructor(
                     d?.draw(canvas)
                     canvas.translate(-note.dx - startingOffset, -note.dy - instrumentSpacing)
                     val distanceFromStaff =
-                        note.dy + note.bottom + noteAddedHeight + noteAdjustDy - (note.top + noteAdjustDy)
-                    Log.d("distanceFromStaff", distanceFromStaff.toString())
+                        note.dy + note.bottom + noteAddedHeight - note.top
 
-                    Log.d("linespacing5", (lineSpacing * 5).toString())
-                    Log.d("linespacing-", (-lineSpacing).toString())
-
-                    if (distanceFromStaff > lineSpacing * 5 || distanceFromStaff <= -lineSpacing) {
+                    if (distanceFromStaff >= lineSpacing * 5 || distanceFromStaff <= -lineSpacing) {
                         val smallLineWidth = 20f
                         val lineX =
                             note.dx + startingOffset + (note.right - note.left + noteAddedWidth) / 2
-                        for (i in 0..(distanceFromStaff / lineSpacing).toInt()) {
+                        for (i in 0..((distanceFromStaff - lineSpacing * 5) / lineSpacing).toInt()) {
                             val lineY =
                                 lineSpacing * (5 + i) + lineThickness / 2 + instrumentSpacing
                             canvas.drawLine(
@@ -609,7 +604,7 @@ class Staff @JvmOverloads constructor(
                 .sortedBy { it.dx }) {
                 for (note in sortedNotes.sortedBy { it.dx }) {
                     if (note.dx == unique.dx) {
-                        val noteLength = 4 * note.length * (compositionSpeed / 100f) * 1000.0f
+                        val noteLength = 4 * note.length * (60f / compositionSpeed) * 1000.0f
                         val newNoteSoundID =
                             resources.getIdentifier(
                                 "raw/${instrumentsWithMeasures.find { it.measures.any { measureWithNotes -> measureWithNotes.measure.id == note.measureId } }?.instrument?.name}${note.pitch}",
@@ -630,7 +625,7 @@ class Staff @JvmOverloads constructor(
                         )
                     }
                 }
-                previousNoteLength += 4 * unique.length * (compositionSpeed / 100f) * 1000.0f
+                previousNoteLength += 4 * unique.length * (60f / compositionSpeed) * 1000.0f
             }
 
             for (sound in noteSounds) {
