@@ -21,7 +21,9 @@ import android.view.ViewGroup
 import android.view.ViewParent
 import android.view.Window
 import android.widget.ImageButton
+import android.widget.ProgressBar
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.LifecycleOwner
@@ -53,7 +55,7 @@ class Staff @JvmOverloads constructor(
             return lineSpacing
         }
     }
-
+    private var loadingSoundProgressBar: ProgressBar? = null
     private var notesAdapter: EditNoteAdapter? = null
     private var startX = 0f
     private var startY = 0f
@@ -91,7 +93,6 @@ class Staff @JvmOverloads constructor(
 
         var instrumentSpacing = 100f
         for (instrument in instrumentsWithMeasures) {
-            Log.d("tu smo ej", instrument.toString())
             var previousMeasureEnd = 0f
             for (measure in instrument.measures) {
                 //Measure start position
@@ -387,8 +388,11 @@ class Staff @JvmOverloads constructor(
         invalidate()
     }
 
-    fun drawNotes(instruments: List<InstrumentWithMeasures>, compositionSpeed: Int) {
+    fun drawNotes(instruments: List<InstrumentWithMeasures>, compositionSpeed: Int, loadingSoundProgressBar: ProgressBar? = null) {
         this.compositionSpeed = compositionSpeed
+        if(loadingSoundProgressBar != null){
+            this.loadingSoundProgressBar = loadingSoundProgressBar
+        }
         instrumentsWithMeasures = instruments
         measuresWithNotes = instrumentsWithMeasures.map { it.measures }.flatten()
         var largestNoteDx = 200f
@@ -723,9 +727,12 @@ class Staff @JvmOverloads constructor(
     private fun playMusic(measuresList: List<MeasureWithNotes>, playButton: ImageButton?) {
         val measureListCopy = measuresList.toMutableList()
         val sortedNotes = measureListCopy.map { it.notes }.flatten()
-        globalScope = GlobalScope.launch(Dispatchers.Default) {
+
+        val activity = context as? Activity
+        globalScope = GlobalScope.launch(Dispatchers.Main) {
             var previousNoteLength = 0f
             var noteSounds = mutableListOf<SoundLoader>()
+            loadingSoundProgressBar?.isVisible = true
             for (unique in sortedNotes.sortedBy { it.length }.distinctBy { it.dx }
                 .sortedBy { it.dx }) {
                 for (note in sortedNotes.sortedBy { it.dx }) {
@@ -753,6 +760,9 @@ class Staff @JvmOverloads constructor(
                 }
                 previousNoteLength += 4 * unique.length * (60f / compositionSpeed) * 1000.0f
             }
+
+
+            loadingSoundProgressBar?.isVisible = false
 
             for (sound in noteSounds) {
                 Handler(Looper.getMainLooper()).postDelayed({
