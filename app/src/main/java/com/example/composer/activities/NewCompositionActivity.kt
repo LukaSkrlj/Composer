@@ -78,7 +78,7 @@ class NewCompositionActivity : AppCompatActivity() {
             if (authorNameText?.length == 0) {
                 authorNameField.error = "Author name is required"
             }
-            if (instrumentTypeText?.length == 0) {
+            if (!INSTRUMENTS.any { instrument -> instrument.lowercase() == instrumentTypeText }) {
                 instrumentType.error = "Instrument type is required"
             }
             if (compositionSpeed == 0) {
