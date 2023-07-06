@@ -14,16 +14,9 @@ import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
 import android.util.Log
-import android.view.Gravity
-import android.view.MotionEvent
-import android.view.View
-import android.view.ViewGroup
-import android.view.ViewParent
-import android.view.Window
+import android.view.*
 import android.widget.ImageButton
 import androidx.core.content.res.ResourcesCompat
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -33,8 +26,8 @@ import com.example.composer.adapters.EditNoteAdapter
 import com.example.composer.constants.*
 import com.example.composer.models.InstrumentWithMeasures
 import com.example.composer.models.MeasureWithNotes
-import com.example.composer.models.SoundLoader
 import com.example.composer.models.Note
+import com.example.composer.models.SoundLoader
 import kotlinx.coroutines.*
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -66,7 +59,7 @@ class Staff @JvmOverloads constructor(
     private val linesCount = 5
     private val lineThickness = 2f
     private val lastNoteMeasureSpacing = 180f
-    private val defaultInstrumentSpacing = 300f
+    private val defaultInstrumentSpacing = 350f
     private val clefSpacing = 50f
     private val pointerDrawable =
         ResourcesCompat.getDrawable(resources, R.drawable.ic_arrow_drop_down, null)
@@ -89,7 +82,7 @@ class Staff @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
-        var instrumentSpacing = 100f
+        var instrumentSpacing = 150f
         for (instrument in instrumentsWithMeasures) {
             Log.d("tu smo ej", instrument.toString())
             var previousMeasureEnd = 0f
@@ -236,25 +229,34 @@ class Staff @JvmOverloads constructor(
                     canvas.translate(-note.dx - startingOffset, -note.dy - instrumentSpacing)
                     val distanceFromStaff =
                         note.dy + note.bottom + noteAddedHeight + noteAdjustDy - (note.top + noteAdjustDy)
-
-                    if (distanceFromStaff > lineSpacing * 5 || distanceFromStaff <= -lineSpacing) {
-                        note.dy + note.bottom + noteAddedHeight - note.top
-
-                        if (distanceFromStaff >= lineSpacing * 5 || distanceFromStaff <= -lineSpacing) {
-                            val smallLineWidth = 20f
-                            val lineX =
-                                note.dx + startingOffset + (note.right - note.left + noteAddedWidth) / 2
-                            for (i in 0..((distanceFromStaff - lineSpacing * 5) / lineSpacing).toInt()) {
-                                val lineY =
-                                    lineSpacing * (5 + i) + lineThickness / 2 + instrumentSpacing
-                                canvas.drawLine(
-                                    lineX - smallLineWidth,
-                                    lineY,
-                                    lineX + smallLineWidth,
-                                    lineY,
-                                    barLinePaint
-                                )
-                            }
+                    val smallLineWidth = 20f
+                    val lineX =
+                        note.dx + startingOffset + (note.right - note.left + noteAddedWidth) / 2
+                    if (distanceFromStaff > lineSpacing * 5) {
+                        for (i in 0..((distanceFromStaff - lineSpacing * 5) / lineSpacing).toInt()) {
+                            val lineY =
+                                lineSpacing * (5 + i) + lineThickness / 2 + instrumentSpacing
+                            canvas.drawLine(
+                                lineX - smallLineWidth,
+                                lineY,
+                                lineX + smallLineWidth,
+                                lineY,
+                                barLinePaint
+                            )
+                        }
+                    }
+                    Log.d("distance", distanceFromStaff.toString())
+                    if (distanceFromStaff < 0) {
+                        for (i in 0..-(distanceFromStaff / lineSpacing).toInt()) {
+                            val lineY =
+                                lineSpacing * (-i - 1) + lineThickness / 2 + instrumentSpacing
+                            canvas.drawLine(
+                                lineX - smallLineWidth,
+                                lineY,
+                                lineX + smallLineWidth,
+                                lineY,
+                                barLinePaint
+                            )
                         }
                     }
 
@@ -269,9 +271,9 @@ class Staff @JvmOverloads constructor(
             if (!isViewOnly) {
                 pointerDrawable?.setBounds(
                     currentNoteDx.toInt() + 2 * clefSpacing.toInt(),
-                    50 + currentInstrumentPosition * defaultInstrumentSpacing.toInt(),
+                    100 + currentInstrumentPosition * defaultInstrumentSpacing.toInt(),
                     currentNoteDx.toInt() + 2 * clefSpacing.toInt() + 50,
-                    100 + currentInstrumentPosition * defaultInstrumentSpacing.toInt()
+                    150 + currentInstrumentPosition * defaultInstrumentSpacing.toInt()
                 )
                 pointerDrawable?.draw(canvas)
             }
@@ -284,7 +286,7 @@ class Staff @JvmOverloads constructor(
             if (context is Activity) {
                 return context as LifecycleOwner
             }
-            context = (context as ContextWrapper).baseContext
+            context = context.baseContext
         }
         return null
     }
@@ -295,7 +297,7 @@ class Staff @JvmOverloads constructor(
             if (context is ViewModelStoreOwner) {
                 return context
             }
-            context = (context as ContextWrapper).baseContext
+            context = context.baseContext
         }
         return null
     }
@@ -309,9 +311,9 @@ class Staff @JvmOverloads constructor(
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         when (event?.action) {
             MotionEvent.ACTION_DOWN -> {
-                startX = event.x;
-                startY = event.y;
-                return true;
+                startX = event.x
+                startY = event.y
+                return true
             }
 
             MotionEvent.ACTION_UP -> {
@@ -341,7 +343,7 @@ class Staff @JvmOverloads constructor(
                         }
                     }
 
-                    return true;
+                    return true
                 }
             }
 
@@ -404,7 +406,7 @@ class Staff @JvmOverloads constructor(
         this.layoutParams =
             ViewGroup.LayoutParams(
                 largestNoteDx.toInt() + 250,
-                instrumentsWithMeasures.size * defaultInstrumentSpacing.toInt() + 200
+                instrumentsWithMeasures.size * defaultInstrumentSpacing.toInt() + 600
             )
         invalidate()
     }
@@ -737,18 +739,20 @@ class Staff @JvmOverloads constructor(
                                 null,
                                 context.packageName
                             )
-                        noteSounds.add(
-                            SoundLoader(
-                                withContext(Dispatchers.Default) {
-                                    loadSound(
-                                        soundPool,
-                                        newNoteSoundID
-                                    )
-                                },
-                                noteLength.toLong(),
-                                previousNoteLength.toLong()
+                        if (newNoteSoundID != 0) {
+                            noteSounds.add(
+                                SoundLoader(
+                                    withContext(Dispatchers.Default) {
+                                        loadSound(
+                                            soundPool,
+                                            newNoteSoundID
+                                        )
+                                    },
+                                    noteLength.toLong(),
+                                    previousNoteLength.toLong()
+                                )
                             )
-                        )
+                        }
                     }
                 }
                 previousNoteLength += 4 * unique.length * (60f / compositionSpeed) * 1000.0f

@@ -384,7 +384,7 @@
                         <com.example.composer.activities.Staff
                             android:id="@+id/staff"
                             android:layout_width="339dp"
-                            android:layout_height="133dp"
+                            android:layout_height="300dp"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintHorizontal_bias="0.0"
                             app:layout_constraintStart_toStartOf="parent"
@@ -398,7 +398,8 @@
         <RelativeLayout
             android:id="@+id/piano_container"
             android:layout_width="wrap_content"
-            android:layout_height="280dp"
+            android:layout_height="240dp"
+            android:layout_marginTop="40dp"
             android:contentDescription="Piano content"
             android:gravity="bottom">
 
