@@ -11,21 +11,37 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_margin="20dp"
             android:orientation="vertical">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_margin="20dp"
-                android:text="Edit Note"
-                android:textStyle="bold"></TextView>
-
-            <Button
-                android:id="@+id/button2"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/instrumentType"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Button" />
+                android:hint="@string/change_instrument">
+
+                <androidx.appcompat.widget.AppCompatAutoCompleteTextView
+                    android:id="@+id/dropdown"
+                    android:layout_width="match_parent"
+                    android:layout_height="62dp"
+                    android:inputType="none" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/submit"
+                android:layout_width="300dp"
+                android:layout_height="50dp"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/button_pill"
+                android:drawableStart="@drawable/ic_add"
+                android:gravity="center"
+                android:paddingLeft="20dp"
+                android:stateListAnimator="@null"
+                android:text="Create new instrument "
+                android:textColor="@color/black" />
+
 
         </LinearLayout>
     </androidx.cardview.widget.CardView>

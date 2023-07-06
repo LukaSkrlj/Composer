@@ -1,8 +1,10 @@
 package com.example.composer.activities
 
 
+import android.app.Dialog
 import android.content.pm.ActivityInfo
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.media.SoundPool
 import android.os.Build
 import android.os.Bundle
@@ -13,12 +15,14 @@ import android.view.WindowManager
 import android.widget.*
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.AppCompatAutoCompleteTextView
 import androidx.appcompat.widget.AppCompatButton
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.view.WindowCompat
 import androidx.core.view.isVisible
+import androidx.core.widget.doOnTextChanged
 import androidx.lifecycle.ViewModelProvider
 import com.example.composer.R
 import com.example.composer.constants.*
@@ -81,6 +85,7 @@ class Piano : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_piano)
+
         var isOptionsVisible = false
         val slidingPaneLayout = findViewById<SlidingUpPanelLayout>(R.id.sliding_layout)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
@@ -190,19 +195,50 @@ class Piano : AppCompatActivity() {
 
         staff = findViewById(R.id.staff)
         findViewById<ImageButton>(R.id.addInstrument).setOnClickListener {
-            currentInstrumentPosition = maxInstrumentPosition + 1
-            instrumentViewModel.insertInstrument(
-                Instrument(
-                    position = currentInstrumentPosition,
-                    name = "guitar",
-                    compositionId = compositionId
-                )
-            ).observe(this) {
-                currentNoteDx = 0f
-                currentInstrumentId = it.toInt()
-                maxInstrumentPosition += 1
-                staff.drawPointer(currentNoteDx, currentInstrumentPosition)
+            val dialog = layoutInflater.inflate(R.layout.edit_note_dialog, null)
+            val editNoteDialog = Dialog(this)
+
+            editNoteDialog.setContentView(dialog)
+
+            val adapter = ArrayAdapter(dialog.context, R.layout.list_item, INSTRUMENTS)
+            dialog.findViewById<AppCompatAutoCompleteTextView>(R.id.dropdown).setAdapter(adapter)
+            val instrumentType = dialog.findViewById<TextInputLayout>(R.id.instrumentType)
+
+            editNoteDialog.setCancelable(true)
+            editNoteDialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            editNoteDialog.show()
+
+            var instrumentTypeText: String = ""
+
+            instrumentType.editText?.doOnTextChanged { text, _, _, _ ->
+                if (text != null) {
+                    instrumentType.error = null
+                }
+                instrumentTypeText = text.toString().lowercase()
             }
+
+            dialog.findViewById<Button>(R.id.submit).setOnClickListener {
+                if (!INSTRUMENTS.any { instrument -> instrument.lowercase() == instrumentTypeText }) {
+                    instrumentType.error = "Instrument type is required"
+                    return@setOnClickListener
+                }
+                
+                currentInstrumentPosition = maxInstrumentPosition + 1
+                instrumentViewModel.insertInstrument(
+                    Instrument(
+                        position = currentInstrumentPosition,
+                        name = instrumentTypeText,
+                        compositionId = compositionId
+                    )
+                ).observe(this) {
+                    currentNoteDx = 0f
+                    currentInstrumentId = it.toInt()
+                    maxInstrumentPosition += 1
+                    staff.drawPointer(currentNoteDx, currentInstrumentPosition)
+                }
+                editNoteDialog.dismiss()
+            }
+
         }
 
         findViewById<AppCompatButton>(R.id.delete_composition_button).setOnClickListener {
