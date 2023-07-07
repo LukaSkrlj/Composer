@@ -55,6 +55,7 @@ class Staff @JvmOverloads constructor(
             return lineSpacing
         }
     }
+
     private var loadingSoundProgressBar: ProgressBar? = null
     private var notesAdapter: EditNoteAdapter? = null
     private var startX = 0f
@@ -388,9 +389,13 @@ class Staff @JvmOverloads constructor(
         invalidate()
     }
 
-    fun drawNotes(instruments: List<InstrumentWithMeasures>, compositionSpeed: Int, loadingSoundProgressBar: ProgressBar? = null) {
+    fun drawNotes(
+        instruments: List<InstrumentWithMeasures>,
+        compositionSpeed: Int,
+        loadingSoundProgressBar: ProgressBar? = null
+    ) {
         this.compositionSpeed = compositionSpeed
-        if(loadingSoundProgressBar != null){
+        if (loadingSoundProgressBar != null) {
             this.loadingSoundProgressBar = loadingSoundProgressBar
         }
         instrumentsWithMeasures = instruments

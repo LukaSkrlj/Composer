@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="horizontal"
     tools:context=".activities.PianoViewOnly">
 
@@ -12,8 +12,8 @@
         android:id="@+id/progressBar_cyclic"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:elevation="10dp"
         android:background="@color/white"
+        android:elevation="10dp"
         android:indeterminate="true"
         android:indeterminateTint="@color/login_background_color"
         android:indeterminateTintMode="src_atop"
@@ -69,6 +69,15 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
+                <ProgressBar
+                    android:id="@+id/loading_sound_progress_bar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:indeterminate="true"
+                    android:indeterminateTint="@color/login_background_color"
+                    android:indeterminateTintMode="src_atop"
+                    android:visibility="gone" />
+
                 <ImageButton
                     android:id="@+id/imageHeart"
                     android:layout_width="55dp"
@@ -102,30 +111,37 @@
     </androidx.cardview.widget.CardView>
 
     <HorizontalScrollView
-        android:layout_marginStart="10dp"
-        android:layout_marginTop="20dp"
         android:id="@+id/viewing"
         android:layout_width="wrap_content"
         android:layout_height="300dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="20dp"
         android:contentDescription="Main content put here"
         android:gravity="top"
+        android:scrollbars="none"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/cardViewHeader">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <ScrollView
             android:layout_width="wrap_content"
-            android:layout_height="300dp">
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
 
-            <com.example.composer.activities.Staff
-                android:id="@+id/staff"
-                android:layout_width="239dp"
-                android:layout_height="133dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.0"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="wrap_content"
+                android:layout_height="300dp">
+
+                <com.example.composer.activities.Staff
+                    android:id="@+id/staff"
+                    android:layout_width="239dp"
+                    android:layout_height="133dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.0"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </ScrollView>
 
     </HorizontalScrollView>
 
