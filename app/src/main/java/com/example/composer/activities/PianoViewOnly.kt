@@ -1,6 +1,7 @@
 package com.example.composer.activities
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import android.widget.ImageButton
@@ -20,6 +21,7 @@ class PianoViewOnly : AppCompatActivity() {
     private var isPlaying = false
     private var isLiked = false
     private lateinit var progressBar: ProgressBar
+    private var compositionSpeed = 60
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,6 +31,7 @@ class PianoViewOnly : AppCompatActivity() {
         val extras = intent.extras
         val favoritesIcon = findViewById<ImageButton>(R.id.imageHeart)
         val currentUser = GoogleSignIn.getLastSignedInAccount(this)
+        val progressBarLoadingSounds = findViewById<ProgressBar>(R.id.loading_sound_progress_bar)
         findViewById<ImageButton>(R.id.playButtonPiano).setOnClickListener {
             playSymphony(!isPlaying)
         }
@@ -58,7 +61,10 @@ class PianoViewOnly : AppCompatActivity() {
                 if (composition.result.exists()) {
                     findViewById<TextView>(R.id.symphonyName).text =
                         composition.result.get("symphonyName") as CharSequence?
-
+                    compositionSpeed =
+                        if (composition.result.get("compositionSpeed") != null) (composition.result.get(
+                            "compositionSpeed"
+                        ) as Long).toInt() else 60
                     if (currentUser != null) {
                         currentUser.id?.let {
                             checkIfSymphonyIsLiked(
@@ -115,46 +121,58 @@ class PianoViewOnly : AppCompatActivity() {
                             val measuresWithNotesList: MutableList<MeasureWithNotes> =
                                 mutableListOf()
                             val instrument = element["instrument"] as HashMap<*, *>
-                            val measures = element["measures"] as ArrayList<HashMap<Any, Any>>
+                            val measures =
+                                if (element["measures"] != null) element["measures"] as ArrayList<HashMap<Any, Any>> else arrayListOf()
                             val newInstrument = Instrument(
                                 id = (instrument["id"] as Long).toInt(),
                                 compositionId = (instrument["compositionId"] as Long).toInt(),
                                 name = instrument["name"] as String,
                                 position = (instrument["position"] as Long).toInt()
                             )
+                            if (measures.isNotEmpty()) {
+                                for ((mesureIndex, measure) in measures.withIndex()) {
+                                    val currentMeasure =
+                                        if (measure["measure"] != null) measure["measure"] as HashMap<*, *> else hashMapOf<Any, Any>()
+                                    val notes =
+                                        if (measure["notes"] != null) measure["notes"] as ArrayList<HashMap<Any, Any>> else arrayListOf()
 
-                            for ((mesureIndex, measure) in measures.withIndex()) {
-                                val currentMeasure = measure["measure"] as HashMap<*, *>
-                                val notes = measure["notes"] as ArrayList<HashMap<Any, Any>>
-
-                                val newMeasure = Measure(
-                                    id = (currentMeasure["id"] as Long).toInt(),
-                                    timeSignatureTop = (currentMeasure["timeSignatureTop"] as Long).toInt(),
-                                    timeSignatureBottom = (currentMeasure["timeSignatureBottom"] as Long).toInt(),
-                                    keySignature = currentMeasure["keySignature"] as String,
-                                    instrumentId = (currentMeasure["instrumentId"] as Long).toInt(),
-                                    clef = currentMeasure["clef"] as String,
-                                )
-                                val newNotesList: MutableList<Note> = mutableListOf()
-
-
-                                for ((noteIndex, note) in notes.withIndex()) {
-                                    val newNote = Note(
-                                        right = (note["right"] as Long).toInt(),
-                                        bottom = (note["bottom"] as Long).toInt(),
-                                        dx = (note["dx"] as Double).toFloat(),
-                                        dy = (note["dy"] as Double).toFloat(),
-                                        measureId = (note["measureId"] as Long).toInt(),
-                                        pitch = note["pitch"] as String
+                                    val newMeasure = if (currentMeasure.isNotEmpty()) Measure(
+                                        id = (currentMeasure["id"] as Long).toInt(),
+                                        timeSignatureTop = (currentMeasure["timeSignatureTop"] as Long).toInt(),
+                                        timeSignatureBottom = (currentMeasure["timeSignatureBottom"] as Long).toInt(),
+                                        keySignature = currentMeasure["keySignature"] as String,
+                                        instrumentId = (currentMeasure["instrumentId"] as Long).toInt(),
+                                        clef = currentMeasure["clef"] as String,
+                                    ) else Measure(
+                                        id = 0,
+                                        timeSignatureTop = 4,
+                                        timeSignatureBottom = 4,
+                                        keySignature = "c",
+                                        instrumentId = (instrument["id"] as Long).toInt(),
+                                        clef = "treble",
                                     )
-                                    newNotesList.add(noteIndex, newNote)
+                                    val newNotesList: MutableList<Note> = mutableListOf()
+
+                                    if (notes.isNotEmpty()) {
+                                        for ((noteIndex, note) in notes.withIndex()) {
+                                            val newNote = Note(
+                                                right = (note["right"] as Long).toInt(),
+                                                bottom = (note["bottom"] as Long).toInt(),
+                                                dx = (note["dx"] as Double).toFloat(),
+                                                dy = (note["dy"] as Double).toFloat(),
+                                                measureId = (note["measureId"] as Long).toInt(),
+                                                pitch = note["pitch"] as String
+                                            )
+                                            newNotesList.add(noteIndex, newNote)
+                                        }
+                                    }
+                                    var newMeasureWithNotes: MeasureWithNotes =
+                                        MeasureWithNotes(measure = newMeasure, notes = newNotesList)
+
+                                    measuresWithNotesList.add(mesureIndex, newMeasureWithNotes)
+
+
                                 }
-                                var newMeasureWithNotes: MeasureWithNotes =
-                                    MeasureWithNotes(measure = newMeasure, notes = newNotesList)
-
-                                measuresWithNotesList.add(mesureIndex, newMeasureWithNotes)
-
-
                             }
                             val newInstrumentWithMeasure: InstrumentWithMeasures =
                                 InstrumentWithMeasures(
@@ -170,7 +188,11 @@ class PianoViewOnly : AppCompatActivity() {
 
                         }
 
-                        staff.drawNotes(instrumentWithMeasuresMutable, compositionSpeed = 60)
+                        staff.drawNotes(
+                            instrumentWithMeasuresMutable,
+                            compositionSpeed = compositionSpeed,
+                            progressBarLoadingSounds
+                        )
                         progressBar.visibility = View.GONE
 
                     } else {

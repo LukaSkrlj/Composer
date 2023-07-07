@@ -266,9 +266,14 @@ class Piano : AppCompatActivity() {
                         ?: 0
                 currentInstrumentType =
                     instrumentsWithMeasures[currentInstrumentPosition].instrument.name
-                if (instrumentsWithMeasures[currentInstrumentPosition].measures.isNotEmpty()) {
+                if (instrumentsWithMeasures[currentInstrumentPosition].measures.isNotEmpty() && instrumentsWithMeasures[currentInstrumentPosition].measures.last().notes.isNotEmpty()) {
                     currentNoteDx =
                         instrumentsWithMeasures[currentInstrumentPosition].measures.last().notes.last().dx
+                    currentMeasureId =
+                        instrumentsWithMeasures[currentInstrumentPosition].measures.last().measure.id
+                    staff.drawPointer(currentNoteDx, currentInstrumentPosition)
+                } else if (instrumentsWithMeasures[currentInstrumentPosition].measures.isNotEmpty() && instrumentsWithMeasures[currentInstrumentPosition].measures.last().notes.isEmpty()) {
+                    currentNoteDx = 0f
                     currentMeasureId =
                         instrumentsWithMeasures[currentInstrumentPosition].measures.last().measure.id
                     staff.drawPointer(currentNoteDx, currentInstrumentPosition)
@@ -326,7 +331,7 @@ class Piano : AppCompatActivity() {
                     //fine largest dx
                     if (compositionWithInstruments.instruments.isNotEmpty() && !isStartingDxFound) {
                         for (instrument in compositionWithInstruments.instruments) {
-                            if (instrument.measures.isNotEmpty()) {
+                            if (instrument.measures.isNotEmpty() && instrument.measures.last().notes.isNotEmpty()) {
                                 val lastMeasure = instrument.measures.last()
                                 val lastNote = lastMeasure.notes.last()
                                 if (lastNote.dx.compareTo(currentNoteDx) >= 0) {
@@ -414,63 +419,48 @@ class Piano : AppCompatActivity() {
 
             if (currentUser != null) {
                 saveToCloudButton.setOnClickListener {
-                    val instrumentWithMeasuresFirebaseAccessible: ArrayList<Any> =
-                        ArrayList()
-                    val instrumentHashMap: HashMap<String, Any> = HashMap()
-                    val instrumentAndMeasuresHashMap: HashMap<String, Any> = HashMap()
-                    val notesAndMeasuresArray: ArrayList<Any> = ArrayList()
-
-                    for (element in instrumentsWithMeasures) {
-
-                        instrumentHashMap["compositionId"] = element.instrument.compositionId
-                        instrumentHashMap["id"] = element.instrument.id
-                        instrumentHashMap["name"] = element.instrument.name
-                        instrumentHashMap["position"] = element.instrument.position
-
-                        for (measureWithNotes in element.measures) {
-
-
-                            val notes: ArrayList<HashMap<String, Any>> = ArrayList()
-                            val measureHashMap: HashMap<String, Any> = HashMap()
-                            measureHashMap["clef"] = measureWithNotes.measure.clef
-                            measureHashMap["instrumentId"] = measureWithNotes.measure.instrumentId
-                            measureHashMap["id"] = measureWithNotes.measure.id
-                            measureHashMap["keySignature"] = measureWithNotes.measure.keySignature
-                            measureHashMap["timeSignatureTop"] =
-                                measureWithNotes.measure.timeSignatureTop
-                            measureHashMap["position"] = measureWithNotes.measure.position
-                            measureHashMap["timeSignatureBottom"] =
-                                measureWithNotes.measure.timeSignatureBottom
-
-
-                            for (note in measureWithNotes.notes) {
-                                val noteHashMap: HashMap<String, Any> = HashMap()
-                                noteHashMap["right"] = note.right
-                                noteHashMap["left"] = note.left
-                                noteHashMap["top"] = note.top
-                                noteHashMap["length"] = note.length
-                                noteHashMap["noteId"] = note.noteId
-                                noteHashMap["bottom"] = note.bottom
-                                noteHashMap["dx"] = note.dx
-                                noteHashMap["dy"] = note.dy
-                                noteHashMap["measureId"] = note.measureId
-                                noteHashMap["resourceId"] = note.resourceId
-                                noteHashMap["pitch"] = note.pitch
-                                notes.add(noteHashMap)
-                            }
-
-                            notesAndMeasuresArray.add(
-                                hashMapOf(
-                                    "measure" to measureHashMap,
-                                    "notes" to notes
-                                )
+                    fun convertToFirebaseMeasureWithNotes(measureWithNotes: MeasureWithNotes): FirebaseMeasureWithNotes {
+                        val measure = measureWithNotes.measure
+                        val notes = measureWithNotes.notes.map { note ->
+                            FirebaseNote(
+                                note.noteId,
+                                note.measureId,
+                                note.pitch,
+                                note.left,
+                                note.top,
+                                note.right,
+                                note.bottom,
+                                note.dx,
+                                note.dy,
+                                note.resourceId,
+                                note.length
                             )
-
                         }
+                        val firebaseMeasure = FirebaseMeasure(
+                            measure.id,
+                            measure.timeSignatureTop,
+                            measure.timeSignatureBottom,
+                            measure.keySignature,
+                            measure.instrumentId,
+                            measure.clef,
+                            measure.position,
+                        )
+                        return FirebaseMeasureWithNotes(firebaseMeasure, notes)
+                    }
 
-                        instrumentAndMeasuresHashMap["measures"] = notesAndMeasuresArray
-                        instrumentAndMeasuresHashMap["instrument"] = instrumentHashMap
-                        instrumentWithMeasuresFirebaseAccessible.add(instrumentAndMeasuresHashMap)
+                    val firebaseAccessible = instrumentsWithMeasures.map { obj ->
+                        val instrument = obj.instrument
+                        val measures = obj.measures.map { convertToFirebaseMeasureWithNotes(it) }
+
+                        FirebaseInstrumentWithMeasures(
+                            FirebaseInstrument(
+                                instrument.id,
+                                instrument.name,
+                                instrument.position,
+                                instrument.compositionId
+                            ),
+                            measures
+                        )
                     }
 
                     db.collection("symphonies").add(
@@ -479,11 +469,12 @@ class Piano : AppCompatActivity() {
                             "symphonyName" to compositionWithInstruments.composition.name,
                             "userID" to currentUser.id.toString(),
                             "symphonyComposer" to compositionWithInstruments.composition.author,
-                            "symphonyDurationSeconds" to 0
+                            "symphonyDurationSeconds" to 0,
+                            "compositionSpeed" to compositionSpeed
                         )
                     ).addOnSuccessListener { document ->
                         document.collection("sheet").document("music")
-                            .set(mapOf("compositionWithInstruments" to instrumentWithMeasuresFirebaseAccessible))
+                            .set(mapOf("compositionWithInstruments" to firebaseAccessible))
                             .addOnSuccessListener {
                                 Toast.makeText(
                                     this,
