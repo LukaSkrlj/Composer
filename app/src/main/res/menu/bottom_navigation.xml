@@ -10,6 +10,11 @@
         android:icon="@drawable/music_list_icon"
         android:title="My symphonies" />
     <item
+        android:id="@+id/helpFragment"
+        android:icon="@drawable/ic_help"
+        android:title="Help"
+        android:visible="true" />
+    <item
         android:id="@+id/profileInfoFragment"
         android:icon="@drawable/ic_profile"
         android:title="Profile" />
@@ -20,4 +25,5 @@
         android:icon="@drawable/ic_logout"
         android:title="Exit"
         android:visible="false" />
+
 </menu>
