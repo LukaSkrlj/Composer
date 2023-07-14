@@ -13,6 +13,9 @@ import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
+import android.webkit.WebResourceRequest
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.widget.*
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -40,11 +43,8 @@ import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.text.DecimalFormat
-import java.time.Duration
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -91,10 +91,26 @@ class Piano : AppCompatActivity() {
     private var currentInstrumentType = "piano"
     private var compositionSpeed = 0
 
+    private class Callback : WebViewClient() {
+        @Override
+        override fun shouldOverrideUrlLoading(
+            view: WebView?,
+            request: WebResourceRequest?
+        ): Boolean {
+            return false
+        }
+    }
+
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_piano)
+        val help: WebView = findViewById<WebView>(R.id.help)
+
+        help.settings.builtInZoomControls = true
+        help.settings.javaScriptEnabled = true
+        help.webViewClient = Callback()
+        help.loadUrl("file:///android_asset/index.html")
 
         var isOptionsVisible = false
         val slidingPaneLayout = findViewById<SlidingUpPanelLayout>(R.id.sliding_layout)
@@ -869,9 +885,10 @@ class Piano : AppCompatActivity() {
                 null,
                 packageName
             )
-
-            val loadedFile = loadSound(soundPool, fileName)
-            soundPool.play(loadedFile, 1f, 1f, 1, 0, speed)
+            if (fileName != 0) {
+                val loadedFile = loadSound(soundPool, fileName)
+                soundPool.play(loadedFile, 1f, 1f, 1, 0, speed)
+            }
         }
     }
 
