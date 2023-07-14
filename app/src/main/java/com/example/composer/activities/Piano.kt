@@ -8,10 +8,14 @@ import android.graphics.drawable.ColorDrawable
 import android.media.SoundPool
 import android.os.Build
 import android.os.Bundle
+import android.text.InputType
 import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
+import android.webkit.WebResourceRequest
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.widget.*
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -37,7 +41,13 @@ import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.firestore.FirebaseFirestore
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.text.DecimalFormat
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 import kotlin.math.roundToInt
 
 
@@ -78,13 +88,29 @@ class Piano : AppCompatActivity() {
     private var currentInstrumentPosition = 0
     private var currentMeasureId = 0
     private var currentNoteLength = 0.25f
-    private var currentInstrumentType = "PIANO"
+    private var currentInstrumentType = "piano"
     private var compositionSpeed = 0
+
+    private class Callback : WebViewClient() {
+        @Override
+        override fun shouldOverrideUrlLoading(
+            view: WebView?,
+            request: WebResourceRequest?
+        ): Boolean {
+            return false
+        }
+    }
 
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_piano)
+        val help: WebView = findViewById<WebView>(R.id.help)
+
+        help.settings.builtInZoomControls = true
+        help.settings.javaScriptEnabled = true
+        help.webViewClient = Callback()
+        help.loadUrl("file:///android_asset/index.html")
 
         var isOptionsVisible = false
         val slidingPaneLayout = findViewById<SlidingUpPanelLayout>(R.id.sliding_layout)
@@ -98,12 +124,14 @@ class Piano : AppCompatActivity() {
         var maxInstrumentPosition = currentInstrumentPosition
         val compositionNameInput = findViewById<TextInputLayout>(R.id.compostion_name)
         val authorNameInput = findViewById<TextInputLayout>(R.id.author_name)
+        val compositionSpeedInput = findViewById<TextInputLayout>(R.id.composition_speed_input)
         val scrollContainer = findViewById<HorizontalScrollView>(R.id.scrollContainer)
         val currentNoteLengthImage = findViewById<ImageView>(R.id.current_note)
         val optionsContainer = findViewById<ConstraintLayout>(R.id.optionsContainer)
         val slider = findViewById<Slider>(R.id.slider)
         val doubleArrow = findViewById<ImageButton>(R.id.new_panel)
         val currentUser = GoogleSignIn.getLastSignedInAccount(this)
+        val loadingSoundProgressBar = findViewById<ProgressBar>(R.id.loading_sound_progress_bar)
         staff = findViewById(R.id.staff)
         noteViewModel = ViewModelProvider(this)[NoteViewModel::class.java]
         measureViewModel = ViewModelProvider(this)[MeasureViewModel::class.java]
@@ -222,7 +250,7 @@ class Piano : AppCompatActivity() {
                     instrumentType.error = "Instrument type is required"
                     return@setOnClickListener
                 }
-                
+                currentInstrumentType = instrumentTypeText
                 currentInstrumentPosition = maxInstrumentPosition + 1
                 instrumentViewModel.insertInstrument(
                     Instrument(
@@ -252,6 +280,8 @@ class Piano : AppCompatActivity() {
                 currentInstrumentId =
                     instrumentsWithMeasures.find { it.instrument.position == currentInstrumentPosition }?.instrument?.id
                         ?: 0
+                currentInstrumentType =
+                    instrumentsWithMeasures[currentInstrumentPosition].instrument.name
                 if (instrumentsWithMeasures[currentInstrumentPosition].measures.isNotEmpty()) {
                     currentNoteDx =
                         instrumentsWithMeasures[currentInstrumentPosition].measures.last().notes.last().dx
@@ -265,12 +295,14 @@ class Piano : AppCompatActivity() {
         }
 
         findViewById<ImageButton>(R.id.selectUpperInstrument).setOnClickListener {
-            Log.d("tu smo ej", currentInstrumentPosition.toString())
+
             if (instrumentsWithMeasures.any { it.instrument.position == currentInstrumentPosition - 1 }) {
                 currentInstrumentPosition -= 1
                 currentInstrumentId =
                     instrumentsWithMeasures.find { it.instrument.position == currentInstrumentPosition }?.instrument?.id
                         ?: 0
+                currentInstrumentType =
+                    instrumentsWithMeasures[currentInstrumentPosition].instrument.name
                 if (instrumentsWithMeasures[currentInstrumentPosition].measures.isNotEmpty()) {
                     currentNoteDx =
                         instrumentsWithMeasures[currentInstrumentPosition].measures.last().notes.last().dx
@@ -318,8 +350,10 @@ class Piano : AppCompatActivity() {
                                     currentInstrumentId = lastMeasure.measure.instrumentId
                                     currentMeasureId = lastMeasure.measure.id
                                     currentInstrumentPosition = instrument.instrument.position
+                                    currentInstrumentType = instrument.instrument.name
                                 }
                             } else {
+                                currentInstrumentType = instrument.instrument.name
                                 currentInstrumentId = instrument.instrument.id
                                 currentInstrumentPosition = instrument.instrument.position
                             }
@@ -334,7 +368,8 @@ class Piano : AppCompatActivity() {
                     this.compositionWithInstruments = compositionWithInstruments
                     findViewById<TextView>(R.id.symphonyName).text =
                         compositionWithInstruments.composition.name
-
+                    compositionSpeedInput.editText?.setText(compositionWithInstruments.composition.compositionSpeed.toString())
+                    compositionSpeedInput.editText?.inputType = InputType.TYPE_CLASS_NUMBER
                     authorNameInput.editText?.setText(compositionWithInstruments.composition.author)
                     compositionNameInput.editText?.setText(compositionWithInstruments.composition.name)
                     progressBar.isVisible = false
@@ -344,8 +379,9 @@ class Piano : AppCompatActivity() {
                         this.updateComposition(
                             authorNameInput,
                             compositionNameInput,
+                            compositionSpeedInput,
                             compositionId,
-                            compositionWithInstruments
+                            compositionWithInstruments,
                         )
                     }
 
@@ -362,7 +398,11 @@ class Piano : AppCompatActivity() {
                         }
                     } else {
                         measuresWithNotes = instrumentsWithMeasures.map { it.measures }.flatten()
-                        staff.drawNotes(instrumentsWithMeasures, compositionSpeed)
+                        staff.drawNotes(
+                            instrumentsWithMeasures,
+                            compositionSpeed,
+                            loadingSoundProgressBar
+                        )
                     }
                 }
             }
@@ -708,15 +748,15 @@ class Piano : AppCompatActivity() {
                     octave++
                 }
 
-                val fileName = resources.getIdentifier(
-                    "raw/$currentInstrumentType$newKey",
-                    null,
-                    this.packageName
-                )
-                var loadedFile: Int? = null
-                if (fileName != 0) {
-                    loadedFile = soundPool.load(this, fileName, 1)
-                }
+//                val fileName = resources.getIdentifier(
+//                    "raw/$currentInstrumentType$newKey",
+//                    null,
+//                    this.packageName
+//                )
+//                var loadedFile: Int? = null
+//                if (fileName != 0) {
+//                    loadedFile = soundPool.load(this, fileName, 1)
+//                }
 
 
                 val blackPianoKey = Button(this)
@@ -736,9 +776,10 @@ class Piano : AppCompatActivity() {
                 blackPianoKey.bringToFront()
 
                 blackPianoKey.setOnClickListener {
-                    if (loadedFile != null) {
-                        this.soundPool.play(loadedFile, 1f, 1f, 1, 0, speed)
-                    }
+//                    if (loadedFile != null) {
+//                        this.soundPool.play(loadedFile, 1f, 1f, 1, 0, speed)
+//                    }
+                    playSound(newKey)
                     //Update this as white keys
                     //noteViewModel.addNote(Note(right = 82, bottom = 82, dx = 0f, dy = 0f))
                     var countSum = 0f
@@ -846,6 +887,35 @@ class Piano : AppCompatActivity() {
         constraintSet.applyTo(constraintLayout)
     }
 
+    private fun playSound(newKey: String) {
+        GlobalScope.launch(Dispatchers.Main) {
+            val fileName = resources.getIdentifier(
+                "raw/$currentInstrumentType$newKey",
+                null,
+                packageName
+            )
+            if (fileName != 0) {
+                val loadedFile = loadSound(soundPool, fileName)
+                soundPool.play(loadedFile, 1f, 1f, 1, 0, speed)
+            }
+        }
+    }
+
+    private suspend fun loadSound(soundPool: SoundPool, soundId: Int): Int {
+        return suspendCoroutine { continuation ->
+            val soundLoadedListener = SoundPool.OnLoadCompleteListener { _, sampleId, status ->
+                if (status == 0) {
+                    continuation.resume(sampleId)
+                } else {
+                    continuation.resumeWithException(Exception("Sound loading failed"))
+                }
+            }
+
+            soundPool.setOnLoadCompleteListener(soundLoadedListener)
+            soundPool.load(this, soundId, 1)
+        }
+    }
+
     private fun addWhitePianoKeys() {
         var octave = 0
         val chainIds = IntArray(52)
@@ -859,16 +929,16 @@ class Piano : AppCompatActivity() {
                 if (key == "c") ++octave
                 val newKey = key + octave
                 if (newKey == "d8") break@outer
-                val fileName = resources.getIdentifier(
-                    "raw/$currentInstrumentType$newKey",
-                    null,
-                    this.packageName
-                )
-
-                var loadedFile: Int? = null
-                if (fileName != 0) {
-                    loadedFile = soundPool.load(this, fileName, 1)
-                }
+//                val fileName = resources.getIdentifier(
+//                    "raw/$currentInstrumentType$newKey",
+//                    null,
+//                    this.packageName
+//                )
+//
+//                var loadedFile: Int? = null
+//                if (fileName != 0) {
+//                    loadedFile = soundPool.load(this, fileName, 1)
+//                }
 
                 val whitePianoKey = Button(this)
 
@@ -900,10 +970,10 @@ class Piano : AppCompatActivity() {
                 val dy = initialNotePosition - (lineSpacing / 2) * lineCounter
 
                 whitePianoKey.setOnClickListener {
-                    Log.d("loadedFile", loadedFile.toString())
-                    if (loadedFile != null) {
-                        this.soundPool.play(loadedFile, 1f, 1f, 1, 0, speed)
-                    }
+//                    if (loadedFile != null) {
+//                        this.soundPool.play(loadedFile, 1f, 1f, 1, 0, speed)
+//                    }
+                    playSound(newKey)
                     var countSum = 0f
                     var measurePosition = 0
                     val df = DecimalFormat("#.##")
@@ -1027,8 +1097,9 @@ class Piano : AppCompatActivity() {
     private fun updateComposition(
         authorNameInput: TextInputLayout,
         compositionNameInput: TextInputLayout,
+        compositionSpeedInput: TextInputLayout,
         compositionId: Int,
-        compositionWithInstruments: CompositionWithInstruments
+        compositionWithInstruments: CompositionWithInstruments,
     ) {
         if (authorNameInput.editText?.text?.isEmpty() == true && compositionNameInput.editText?.text?.isEmpty() == true) {
             compositionNameInput.editText?.error = "Composition name is required"
@@ -1046,12 +1117,27 @@ class Piano : AppCompatActivity() {
             return
         }
 
+        if (compositionSpeedInput.editText?.text?.isEmpty() == true) {
+            compositionSpeedInput.editText?.error = "Speed cannot be be empty"
+            return
+        }
+
+
+        if (compositionSpeedInput.editText?.text?.toString()
+                ?.toInt() == 0 || compositionSpeedInput.editText?.text?.toString()?.toInt()!! > 260
+        ) {
+            compositionSpeedInput.editText?.error = "Speed must be between 0 and 260"
+            return
+        }
+
         compositionViewModel.updateCompositionInfo(
             compositionName = compositionNameInput.editText?.text.toString(),
             authorName = authorNameInput.editText?.text.toString(),
-            compositionId = compositionId
+            compositionId = compositionId,
+            compositionSpeed = compositionSpeedInput.editText?.text?.toString()?.toInt()!!
         )
-
+        Toast.makeText(this, "Changes saved successfully", Toast.LENGTH_SHORT).show()
+        compositionSpeed = compositionSpeedInput.editText?.text?.toString()?.toInt()!!
         findViewById<TextView>(R.id.symphonyName).text =
             compositionWithInstruments.composition.name
     }
