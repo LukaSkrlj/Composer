@@ -105,12 +105,7 @@ class Piano : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_piano)
-        val help: WebView = findViewById<WebView>(R.id.help)
 
-        help.settings.builtInZoomControls = true
-        help.settings.javaScriptEnabled = true
-        help.webViewClient = Callback()
-        help.loadUrl("file:///android_asset/index.html")
 
         var isOptionsVisible = false
         val slidingPaneLayout = findViewById<SlidingUpPanelLayout>(R.id.sliding_layout)
